@@ -1,3 +1,5 @@
+![](https://content.gnoss.ws/imagenes/proyectos/personalizacion/7e72bf14-28b9-4beb-82f8-e32a3b49d9d3/cms/logognossazulprincipal.png)
+
 # Gnoss.Web.Intern.OpenCORE
 
 Aplicación Web que se encarga de almacenar el contenido estático (imágenes, vídeos y pdfs principalmente) que suben los usuarios desde la Web. Esta aplicación NO debe ser accesible desde el exterior de la plataforma GNOSS, sólo debe estar disponible para que el resto de aplicaciones puedan hacer peticiones Web a ella. 
@@ -5,11 +7,11 @@ Aplicación Web que se encarga de almacenar el contenido estático (imágenes, v
 Configuración estandar de esta aplicación en el archivo docker-compose.yml: 
 
 ```yml
-interno:
-    image: intern
+intern:
+    image: docker.gnoss.com/intern
     env_file: .env
     ports:
-     - ${puerto_interno}:80
+     - ${puerto_intern}:80
     environment:
      virtuosoConnectionString: ${virtuosoConnectionString}
      acid: ${acid}
@@ -26,7 +28,7 @@ interno:
      Servicios__urlBase: ${Servicios__urlBase}
      connectionType: ${connectionType}
     volumes:
-      - ./logs/interno:/app/logs
+      - ./logs/intern:/app/logs
       - ./content/doclinks:/app/doclinks
       - ./content/imagenes:/app/imagenes
       - ./content/ImagenesEnlaces:/app/ImagenesEnlaces
