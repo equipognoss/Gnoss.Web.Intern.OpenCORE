@@ -35,4 +35,13 @@ intern:
       - ./content/Videos:/app/Videos
 ```
 
+En esta configuración, existen varios volúmenes que apuntan a las rutas del contenedor:
+
+* /app/doclinks
+* /app/imagenes
+* /app/ImagenesEnlaces
+* /app/Videos
+
+Esos volumenes almacenarán respectivamente las imágenes (/app/imagenes), miniaturas de imágenes (/app/ImagenesEnlaces), vídeos (/app/Videos) y archivos disponibles como contenido estático (/app/doclinks) subidos a la plataforma. Se recomienda realizar copias de seguridad de las unidades en la que se mapeen esos directorios.
+
 Se pueden consultar los posibles valores de configuración de cada parámetro aquí: https://github.com/equipognoss/Gnoss.Platform.Deploy
