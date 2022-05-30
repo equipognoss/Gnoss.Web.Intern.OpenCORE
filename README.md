@@ -8,7 +8,7 @@ Configuración estandar de esta aplicación en el archivo docker-compose.yml:
 
 ```yml
 intern:
-    image: docker.gnoss.com/intern
+    image: gnoss/intern
     env_file: .env
     ports:
      - ${puerto_intern}:80
