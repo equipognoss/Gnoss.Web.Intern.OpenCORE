@@ -1,5 +1,6 @@
 ﻿using Es.Riam.Gnoss.FileManager;
 using Es.Riam.Gnoss.Util.General;
+using Es.Riam.InterfacesOpenArchivos;
 using Gnoss.Web.Intern.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -37,10 +38,11 @@ namespace Gnoss.Web.Intern.Controllers
         private Conexion mConexion;
 
         private FileOperationsService _fileOperationsService;
+        private IUtilArchivos _utilArchivos;
 
         #endregion
 
-        public VideosController(LoggingService loggingService, Conexion conexion, IHostingEnvironment env)
+        public VideosController(LoggingService loggingService, Conexion conexion, IHostingEnvironment env, IUtilArchivos utilArchivos)
         {
             mLoggingService = loggingService;
             mConexion = conexion;
@@ -62,8 +64,8 @@ namespace Gnoss.Web.Intern.Controllers
             {
                 mAzureStorageConnectionString = "";
             }
-
-            mGestorArchivos = new GestionArchivos(mLoggingService, pRutaArchivos: mRutaVideos, pAzureStorageConnectionString: mAzureStorageConnectionString);
+            _utilArchivos = utilArchivos;
+            mGestorArchivos = new GestionArchivos(mLoggingService, utilArchivos, pRutaArchivos: mRutaVideos, pAzureStorageConnectionString: mAzureStorageConnectionString);
             _fileOperationsService = new FileOperationsService(mLoggingService, env);
         }
 

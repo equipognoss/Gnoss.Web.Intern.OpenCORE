@@ -27,6 +27,7 @@
     <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.FileManager\Es.Riam.Gnoss.FileManager.csproj" />
     <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.Logica\Es.Riam.Gnoss.Logica.csproj" />
     <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Gnoss.Web.Controles\Es.Riam.Gnoss.Web.Controles.csproj" />
+    <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.OpenArchivos\Es.Riam.OpenArchivos.csproj" />
     <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.OpenReplication\Es.Riam.OpenReplication.csproj" />
     <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Util\Es.Riam.Util.csproj" />
     <ProjectReference Include="..\..\Gnoss.Commons\Es.Riam.Web.Util\Es.Riam.Web.Util.csproj" />

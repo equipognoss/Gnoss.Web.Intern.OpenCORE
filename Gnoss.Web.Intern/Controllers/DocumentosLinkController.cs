@@ -1,6 +1,7 @@
 ﻿using Es.Riam.Gnoss.FileManager;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
+using Es.Riam.InterfacesOpenArchivos;
 using Es.Riam.Util;
 using Gnoss.Web.Intern.Services;
 using Microsoft.AspNetCore.Hosting;
@@ -36,12 +37,13 @@ namespace Gnoss.Web.Intern.Controllers
         private IHostingEnvironment _env;
         private ConfigService _configService;
         private FileOperationsService _fileOperationsService;
+        private IUtilArchivos _utilArchivos;
 
         #endregion
 
         #region Constructor
 
-        public DocumentosLinkController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IHostingEnvironment env, ConfigService configService)
+        public DocumentosLinkController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IHostingEnvironment env, ConfigService configService, IUtilArchivos utilArchivos)
         {
             _loggingService = loggingService;
             _httpContextAccessor = httpContextAccessor;
@@ -61,8 +63,8 @@ namespace Gnoss.Web.Intern.Controllers
             {
                 mAzureStorageConnectionString = "";
             }
-
-            mGestorArchivos = new GestionArchivos(_loggingService, pRutaArchivos: mRutaDocumentos, pAzureStorageConnectionString: mAzureStorageConnectionString);
+            _utilArchivos = utilArchivos;
+            mGestorArchivos = new GestionArchivos(_loggingService, utilArchivos, pRutaArchivos: mRutaDocumentos, pAzureStorageConnectionString: mAzureStorageConnectionString);
         }
 
         #endregion

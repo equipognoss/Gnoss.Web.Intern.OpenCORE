@@ -1,6 +1,7 @@
 ﻿using Es.Riam.Gnoss.FileManager;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
+using Es.Riam.InterfacesOpenArchivos;
 using Es.Riam.Util;
 using Gnoss.Web.Intern.Services;
 using Microsoft.AspNetCore.Hosting;
@@ -47,10 +48,11 @@ namespace Gnoss.Web.Intern.Controllers
         private LoggingService _loggingService;
         private GestionArchivos mGestorArchivosOntologias;
         private FileOperationsService _fileOperationsService;
+        private IUtilArchivos _utilArchivos;
 
         #endregion
 
-        public EstilosController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IHostingEnvironment env, ConfigService configService)
+        public EstilosController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IHostingEnvironment env, ConfigService configService, IUtilArchivos utilArchivos)
         {
             _configService = configService;
             _loggingService = loggingService;
@@ -73,16 +75,16 @@ namespace Gnoss.Web.Intern.Controllers
             {
                 mAzureStorageConnectionString = "";
             }
-
-            mGestorArchivos = new GestionArchivos(loggingService, pRutaArchivos: mRutaImagenes, pAzureStorageConnectionString: mAzureStorageConnectionString);
-            mGestorArchivosOntologias = new GestionArchivos(loggingService, pRutaArchivos: mRutaOntologias, pAzureStorageConnectionString: mAzureStorageConnectionStringOntologias);
+            _utilArchivos = utilArchivos;
+            mGestorArchivos = new GestionArchivos(loggingService, utilArchivos, pRutaArchivos: mRutaImagenes, pAzureStorageConnectionString: mAzureStorageConnectionString);
+            mGestorArchivosOntologias = new GestionArchivos(loggingService, utilArchivos, pRutaArchivos: mRutaOntologias, pAzureStorageConnectionString: mAzureStorageConnectionStringOntologias);
         }
 
         #region Metodos
         
 
         [HttpPost]
-        [Route("add-zip")]
+        [Route("AgregarZIP")]
         public ActionResult AgregarZIP(string pNombre, string pExtension, Guid? pProyectoID, string pFecha, IFormFile file, string pNombreVersion = null, string pNombreCarpeta = null)
         {
             string personalizacion = (pProyectoID.HasValue ? pProyectoID.Value.ToString() : "ecosistema");
@@ -205,13 +207,13 @@ namespace Gnoss.Web.Intern.Controllers
         }
 
         [HttpPost]
-        [Route("download-zip")]
+        [Route("DescargarZIP")]
         public ActionResult DescargarZIP(Guid? pProyectoID, string pNombreVersion = null, string pNombreCarpeta = null, bool pCss = false, bool pImagenes = false)
         {
 
             string personalizacion = (pProyectoID.HasValue ? pProyectoID.Value.ToString() : "ecosistema");
 
-            GuardarLogTest("Entra peticion descargaZip Estilos");
+            //GuardarLogTest("Entra peticion descargaZip Estilos");
 
             personalizacion = (string.IsNullOrEmpty(pNombreCarpeta) ? personalizacion : pNombreCarpeta);
 
@@ -228,7 +230,7 @@ namespace Gnoss.Web.Intern.Controllers
                 ruta = Path.Combine("proyectos", "personalizacion", personalizacion, "versiones", pNombreVersion);
             }
 
-            GuardarLogTest("La ruta donde estaran los estilos es la siguiente: " + mRutaImagenes + "\\" + ruta);
+            //GuardarLogTest("La ruta donde estaran los estilos es la siguiente: " + mRutaImagenes + "\\" + ruta);
 
             try
             {
@@ -312,7 +314,7 @@ namespace Gnoss.Web.Intern.Controllers
 
         //Metodo para devolver los archivos que sean de Estilo Web (css,js,fonts etc...)
         [HttpPost]
-        [Route("download-zip-css")]
+        [Route("DescargarZIPCss")]
         public ActionResult DescargarZIPCss(Guid? pProyectoID, string pNombreVersion = null, string pNombreCarpeta = null)
         {
             return DescargarZIP(pProyectoID, pNombreVersion, pNombreCarpeta, true, false);
@@ -320,7 +322,7 @@ namespace Gnoss.Web.Intern.Controllers
 
         //Metodo para devolver los archivos que sean de Estilo Imagenes (jpg,png,gif etc...)
         [HttpPost]
-        [Route("download-zip-images")]
+        [Route("DescargarZIPImagenes")]
         public ActionResult DescargarZIPImagenes(Guid? pProyectoID, string pNombreVersion = null, string pNombreCarpeta = null)
         {
             return DescargarZIP(pProyectoID, pNombreVersion, pNombreCarpeta, false, true);
@@ -378,13 +380,13 @@ namespace Gnoss.Web.Intern.Controllers
 
 
         [HttpPost]
-        [Route("download-file-paths")]
+        [Route("DescargarRutasFicheros")]
         public ActionResult DescargarRutasFicheros(Guid? pProyectoID, string pNombreVersion = null, string pNombreCarpeta = null)
         {
 
             string personalizacion = (pProyectoID.HasValue ? pProyectoID.Value.ToString() : "ecosistema");
 
-            GuardarLogTest("Entra peticion descargaZip Estilos");
+            //GuardarLogTest("Entra peticion descargaZip Estilos");
 
             personalizacion = (string.IsNullOrEmpty(pNombreCarpeta) ? personalizacion : pNombreCarpeta);
 
@@ -402,7 +404,7 @@ namespace Gnoss.Web.Intern.Controllers
                 ruta = Path.Combine("proyectos", "personalizacion", personalizacion, "versiones", pNombreVersion);
             }
 
-            GuardarLogTest("La ruta donde estaran los estilos es la siguiente: " + mRutaImagenes + "\\" + ruta);
+            //GuardarLogTest("La ruta donde estaran los estilos es la siguiente: " + mRutaImagenes + "\\" + ruta);
 
             try
             {

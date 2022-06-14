@@ -3,6 +3,7 @@ using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper.Model;
 using Es.Riam.Gnoss.Web.MVC.Models.AdministrarEstilos;
+using Es.Riam.InterfacesOpenArchivos;
 using Es.Riam.Util;
 using Gnoss.Web.Intern.Services;
 using Microsoft.AspNetCore.Hosting;
@@ -54,12 +55,13 @@ namespace Gnoss.Web.Intern.Controllers
         private IHttpContextAccessor mHttpContextAccessor;
         private ConfigService _configService;
         private FileOperationsService _fileOperationsService;
+        private IUtilArchivos _utilArchivos;
 
         #endregion
 
         #region Constructor
 
-        public ImagenesController(LoggingService loggingService, IHostingEnvironment env, IHttpContextAccessor httpContextAccessor, ConfigService configService)
+        public ImagenesController(LoggingService loggingService, IHostingEnvironment env, IHttpContextAccessor httpContextAccessor, ConfigService configService, IUtilArchivos utilArchivos)
         {
             mHttpContextAccessor = httpContextAccessor;
             mEnv = env;
@@ -83,9 +85,9 @@ namespace Gnoss.Web.Intern.Controllers
             {
                 mAzureStorageConnectionString = "";
             }
-
-            mGestorArchivos = new GestionArchivos(loggingService, pRutaArchivos: mRutaImagenes, pAzureStorageConnectionString: mAzureStorageConnectionString);
-            mGestorArchivosOntologias = new GestionArchivos(loggingService, pRutaArchivos: mRutaOntologias, pAzureStorageConnectionString: mAzureStorageConnectionStringOntologias);
+            _utilArchivos = utilArchivos;
+            mGestorArchivos = new GestionArchivos(loggingService, utilArchivos, pRutaArchivos: mRutaImagenes, pAzureStorageConnectionString: mAzureStorageConnectionString);
+            mGestorArchivosOntologias = new GestionArchivos(loggingService, utilArchivos, pRutaArchivos: mRutaOntologias, pAzureStorageConnectionString: mAzureStorageConnectionStringOntologias);
         }
 
         #endregion

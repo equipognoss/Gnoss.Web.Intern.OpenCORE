@@ -3,6 +3,8 @@ using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Util.Seguridad;
+using Es.Riam.InterfacesOpenArchivos;
+using Es.Riam.OpenArchivos;
 using Es.Riam.OpenReplication;
 using Es.Riam.Util;
 using Microsoft.AspNetCore.Builder;
@@ -45,6 +47,7 @@ namespace Gnoss.Web.Intern
             services.AddScoped(typeof(UtilGeneral));
             services.AddScoped(typeof(LoggingService));
             services.AddScoped(typeof(Configuracion));
+            services.AddScoped<IUtilArchivos, UtilArchivosOpen>();
             services.AddScoped<IServicesUtilVirtuosoAndReplication, ServicesVirtuosoAndBidirectionalReplicationOpen>();
             string bdType = "";
             IDictionary environmentVariables = Environment.GetEnvironmentVariables();
