@@ -46,10 +46,10 @@ namespace Gnoss.Web.Intern.Controllers
         {
             mLoggingService = loggingService;
             mConexion = conexion;
-
-            mRutaVideos = Path.Combine(env.WebRootPath, "~/" + "Videos");
-            mRutaConversionVideos = Path.Combine(env.WebRootPath, "~/" + "ReproductorVideo");
-            string rutaConfigs = Path.Combine(env.WebRootPath, "config");
+            
+            mRutaVideos = Path.Combine(env.ContentRootPath, "Videos");
+            mRutaConversionVideos = Path.Combine(env.ContentRootPath, "ReproductorVideo");
+            string rutaConfigs = Path.Combine(env.ContentRootPath, "config");
 
             //mRutaVideos = this.Server.MapPath("~/" + "Videos");
             //mRutaConversionVideos = this.Server.MapPath("~/" + "ReproductorVideo");
@@ -80,67 +80,67 @@ namespace Gnoss.Web.Intern.Controllers
 
         [HttpPost]
         [Route("AgregarVideoPersonal")]
-        public IActionResult AgregarVideoPersonal(IFormFile pFichero, string pExtension, Guid pDocumentoID, Guid pPersonaID)
+        public int AgregarVideoPersonal(IFormFile pFichero, string pExtension, Guid pDocumentoID, Guid pPersonaID)
         {
             try
             {
-                bool resultado = CrearFichero(pFichero, $"{pDocumentoID}.{pExtension}", pPersonaID, 0);
+                bool resultado = CrearFichero(pFichero, $"{pDocumentoID}{pExtension}", pPersonaID, 0);
                 if (resultado)
                 {
-                    return Ok(1);//Ha ido bien
+                    return 1;//Ha ido bien
                 }
                 else
                 {
-                    return Ok(0);
+                    return 0;
                 }
             }
             catch (Exception)
             {
-                return Ok(0);//Algo falló
+                return 0;//Algo falló
             }
         }
 
         [HttpPost]
         [Route("AgregarVideoOrganizacion")]
-        public IActionResult AgregarVideoOrganizacion(IFormFile pFichero, string pExtension, Guid pDocumentoID, Guid pOrganizacionID)
+        public int AgregarVideoOrganizacion(IFormFile pFichero, string pExtension, Guid pDocumentoID, Guid pOrganizacionID)
         {
             try
             {
-                bool resultado = CrearFichero(pFichero, $"{pDocumentoID}.{pExtension}", pOrganizacionID, 1);
+                bool resultado = CrearFichero(pFichero, $"{pDocumentoID}{pExtension}", pOrganizacionID, 1);
                 if (resultado)
                 {
-                    return Ok(1);//Ha ido bien
+                    return 1;//Ha ido bien
                 }
                 else
                 {
-                    return Ok(0);
+                    return 0;
                 }
             }
             catch (Exception)
             {
-                return Ok(0);//Algo falló
+                return 0;//Algo falló
             }
         }
 
         [HttpPost]
         [Route("AgregarVideoSemantico")]
-        public IActionResult AgregarVideoSemantico(IFormFile pFichero, string pExtension, Guid pDocumentoID, Guid pVideoID)
+        public int AgregarVideoSemantico(IFormFile pFichero, string pExtension, Guid pDocumentoID, Guid pVideoID)
         {
             try
             {
-                bool resultado = CrearFichero(pFichero, $"{pVideoID}.{pExtension}", pDocumentoID, 2);
+                bool resultado = CrearFichero(pFichero, $"{pVideoID}{pExtension}", pDocumentoID, 2);
                 if (resultado)
                 {
-                    return Ok(1);//Ha ido bien
+                    return 1;//Ha ido bien
                 }
                 else
                 {
-                    return Ok(0);
+                    return 0;
                 }
             }
             catch (Exception)
             {
-                return Ok(0);//Algo falló
+                return 0;//Algo falló
             }
         }
 
@@ -169,23 +169,23 @@ namespace Gnoss.Web.Intern.Controllers
 
         [HttpDelete]
         [Route("BorrarVideoPersonal")]
-        public IActionResult BorrarVideoPersonal(Guid pDocumentoID, Guid pPersonaID)
+        public bool BorrarVideoPersonal(Guid pDocumentoID, Guid pPersonaID)
         {
-            return Ok(BorrarVideo(pDocumentoID, pPersonaID, 0));
+            return BorrarVideo(pDocumentoID, pPersonaID, 0);
         }
 
         [HttpDelete]
         [Route("BorrarVideoOrganizacion")]
-        public IActionResult BorrarVideoOrganizacion(Guid pDocumentoID, Guid pOrganizacionID)
+        public bool BorrarVideoOrganizacion(Guid pDocumentoID, Guid pOrganizacionID)
         {
-            return Ok(BorrarVideo(pDocumentoID, pOrganizacionID, 1));
+            return BorrarVideo(pDocumentoID, pOrganizacionID, 1);
         }
 
         [HttpDelete]
         [Route("BorrarVideoSemantico")]
-        public IActionResult BorrarVideoSemantico(Guid pDocumentoID, Guid pVideoID)
+        public bool BorrarVideoSemantico(Guid pDocumentoID, Guid pVideoID)
         {
-            return Ok(BorrarVideo(pVideoID, pDocumentoID, 2));
+            return BorrarVideo(pVideoID, pDocumentoID, 2);
         }
 
 
