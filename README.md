@@ -29,6 +29,9 @@ intern:
      idiomas: ${idiomas}
      Servicios__urlBase: ${Servicios__urlBase}
      connectionType: ${connectionType}
+     scopeIdentity: ${scopeIdentity}
+     clientIDIdentity: ${clientIDIdentity}
+     clientSecretIdentity: ${clientIDIdentity}
     volumes:
       - ./logs/intern:/app/logs
       - ./content/doclinks:/app/doclinks
