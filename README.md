@@ -2,6 +2,8 @@
 
 # Gnoss.Web.Intern.OpenCORE
 
+![](https://github.com/equipognoss/Gnoss.Web.Intern.OpenCORE/workflows/BuildWeb/badge.svg)
+
 Aplicación Web que se encarga de almacenar el contenido estático (imágenes, vídeos y pdfs principalmente) que suben los usuarios desde la Web. Esta aplicación NO debe ser accesible desde el exterior de la plataforma GNOSS, sólo debe estar disponible para que el resto de aplicaciones puedan hacer peticiones Web a ella. 
 
 Configuración estandar de esta aplicación en el archivo docker-compose.yml: 
