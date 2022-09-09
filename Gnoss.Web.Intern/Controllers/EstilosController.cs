@@ -4,6 +4,7 @@ using Es.Riam.Gnoss.Util.General;
 using Es.Riam.InterfacesOpenArchivos;
 using Es.Riam.Util;
 using Gnoss.Web.Intern.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,6 +20,7 @@ namespace Gnoss.Web.Intern.Controllers
 {
     [Route("[controller]")]
     [ApiController]
+    [Authorize]
     public class EstilosController : ControllerBase
     {
         #region Miembros
@@ -91,7 +93,7 @@ namespace Gnoss.Web.Intern.Controllers
 
             personalizacion = (string.IsNullOrEmpty(pNombreCarpeta) ? personalizacion : pNombreCarpeta);
 
-            Byte[] pFichero = _fileOperationsService.ReadFileBytes(file);
+            byte[] pFichero = _fileOperationsService.ReadFileBytes(file);
             // Ruta archivos en uso
             string ruta;
             // Ruta raiz de historial

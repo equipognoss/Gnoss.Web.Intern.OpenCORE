@@ -2,6 +2,7 @@
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.InterfacesOpenArchivos;
 using Gnoss.Web.Intern.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +16,7 @@ namespace Gnoss.Web.Intern.Controllers
     /// </summary>
     [ApiController]
     [Route("[controller]")]
+    [Authorize]
     public class VideosController : ControllerBase
     {
         #region Miembros

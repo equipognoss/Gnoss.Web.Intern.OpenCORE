@@ -6,6 +6,7 @@ using Es.Riam.Gnoss.Web.MVC.Models.AdministrarEstilos;
 using Es.Riam.InterfacesOpenArchivos;
 using Es.Riam.Util;
 using Gnoss.Web.Intern.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -26,6 +27,7 @@ namespace Gnoss.Web.Intern.Controllers
     /// </summary>
     [ApiController]
     [Route("image-service")]
+    [Authorize]
     public class ImagenesController : ControllerBase
     {
 
@@ -773,7 +775,8 @@ namespace Gnoss.Web.Intern.Controllers
         /// <summary>
         /// Devuelve los nombres de las imágenes que contienen el NombreImagen.
         /// </summary>
-        /// <param name="pNombreImagen">Nombre de la imagen usado para filtrar</param>
+        /// <param name="relative_path">Ruta del directorio</param>
+        /// <param name="image_name">Nombre de la imagen usado para filtrar</param>
         /// <returns>Lista de cadenas con los nombres de las imágenes que contienen el nombre pasado.</returns>
         [HttpGet]
         [Route("get-image-ids-from-image-name")]
@@ -801,6 +804,42 @@ namespace Gnoss.Web.Intern.Controllers
             catch (Exception ex)
             {
                 _fileOperationsService.GuardarLogError(ex);
+                return StatusCode(500);
+            }
+        }
+
+        /// <summary>
+        /// Devuelve la información relevante sobre los ficheros del directorio indicado
+        /// </summary>
+        /// <param name="relative_path">Nombre de la imagen usado para filtrar</param>
+        /// <param name="image_name">Filtro utilizado para buscar uno o más ficheros en el directorio</param>
+        /// <returns>Lista de cadenas con los nombres de las imágenes que contienen el nombre pasado.</returns>
+        [HttpGet]
+        [Route("get-files-data-from-directory")]
+        public IActionResult ObtenerDatosFicherosDeCarpeta(string relative_path)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(relative_path))
+                {
+
+                    if (mGestorArchivos.ComprobarExisteDirectorio(relative_path).Result)
+                    {
+                        return Ok(mGestorArchivos.ObtenerInformacionFicherosDeDirectorio(relative_path).Result.ToList());
+                    }
+                    else
+                    {
+                        return Ok();
+                    }
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex);
                 return StatusCode(500);
             }
         }

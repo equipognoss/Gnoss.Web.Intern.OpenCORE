@@ -1,9 +1,11 @@
 ﻿using Es.Riam.Gnoss.FileManager;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
+using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper.Model;
 using Es.Riam.InterfacesOpenArchivos;
 using Es.Riam.Util;
 using Gnoss.Web.Intern.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +19,7 @@ namespace Gnoss.Web.Intern.Controllers
     /// </summary>
     [ApiController]
     [Route("[controller]")]
+    [Authorize]
     [System.ComponentModel.ToolboxItem(false)]
     // Para permitir que se llame a este servicio Web desde un script, usando ASP.NET AJAX, quite la marca de comentario de la línea siguiente. 
     // [System.Web.Script.Services.ScriptService]
@@ -96,7 +99,6 @@ namespace Gnoss.Web.Intern.Controllers
             try
             {
                 string directorio = UtilArchivos.DirectorioDocumento(pDocumentoID);
-               // byte[] bytes = FileOperationsService.ReadFileBytes(file);
                 mGestorArchivos.CrearFicheroFisico(directorio, pNombre + pExtension, _fileOperationsService.ReadFileBytes(pBytes));
                 return Ok(true);
             }
@@ -107,10 +109,14 @@ namespace Gnoss.Web.Intern.Controllers
             }
         }
 
-
+        /// <summary>
+        /// Agrega un documento al directorio indicado
+        /// </summary>
+        /// <param name="pFile">Clase con el contenido del fichero, nombre, extensión y ruta a alojar</param>
+        /// <returns></returns>
         [HttpPost]
         [Route("add-document-to-directory")]
-        public ActionResult AgregarDocumentoADirectorio(string pRuta, string pNombre, string pExtension, IFormFile file)
+        public IActionResult AgregarDocumentoADirectorio(GnossFile pFile)
         {
             try
             {
@@ -118,16 +124,13 @@ namespace Gnoss.Web.Intern.Controllers
                 {
                     mAzureStorageConnectionString = "";
 
-                    if (pRuta.StartsWith("imagenes/"))
+                    if (pFile.path.StartsWith("imagenes/"))
                     {
-                        pRuta = pRuta.Substring("imagenes/".Length);
+                        pFile.path = pFile.path.Substring("imagenes/".Length);
                     }
                 }
 
-
-                byte[] bytes = _fileOperationsService.ReadFileBytes(file);
-
-                mGestorArchivos.CrearFicheroFisico(pRuta, pNombre + pExtension, bytes);
+                mGestorArchivos.CrearFicheroFisico(pFile.path, pFile.name + pFile.extension, pFile.file);
 
                 return Ok("OK");
             }
