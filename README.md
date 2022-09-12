@@ -10,7 +10,7 @@ Configuración estandar de esta aplicación en el archivo docker-compose.yml:
 
 ```yml
 intern:
-    image: gnoss/intern
+    image: gnoss/gnoss.web.intern.opencore
     env_file: .env
     ports:
      - ${puerto_intern}:80
