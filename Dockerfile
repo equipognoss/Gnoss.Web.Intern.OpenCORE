@@ -22,6 +22,14 @@ RUN sed -i "s|MinProtocol = TLSv1.2|MinProtocol = TLSv1|g" /etc/ssl/openssl.cnf 
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl
 
+RUN apt-get install -y unzip
+
+RUN apt-get install -y nginx
+
+COPY default /etc/nginx/sites-enabled/
+
+COPY nginx.conf /etc/nginx/
+
 WORKDIR /app
 
 COPY --from=build-env /app/out .
