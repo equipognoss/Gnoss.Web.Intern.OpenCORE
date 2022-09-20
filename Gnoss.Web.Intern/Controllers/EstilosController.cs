@@ -64,7 +64,7 @@ namespace Gnoss.Web.Intern.Controllers
             _env = env;
             _fileOperationsService = new FileOperationsService(_loggingService, _env);
 
-            mRutaZipExe = Path.Combine(env.ContentRootPath, "/zip");
+            mRutaZipExe = Path.Combine(env.ContentRootPath, "zip");
 
             mAzureStorageConnectionString = _configService.ObtenerAzureStorageConnectionString();
 
@@ -86,6 +86,7 @@ namespace Gnoss.Web.Intern.Controllers
         
 
         [HttpPost]
+        [RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
         [Route("AgregarZIP")]
         public ActionResult AgregarZIP(string pNombre, string pExtension, Guid? pProyectoID, string pFecha, IFormFile file, string pNombreVersion = null, string pNombreCarpeta = null)
         {
@@ -136,7 +137,8 @@ namespace Gnoss.Web.Intern.Controllers
                     //}
 
                     string rutaZip = mGestorArchivos.ObtenerRutaDirectorioZip(ruta);
-                    ProcessStartInfo procStartInfo = new ProcessStartInfo(Path.Combine(mRutaZipExe, "7z.exe"), $" x -y \"{Path.Combine("historial",pFecha,pNombre + pExtension)}\"");
+                    //ProcessStartInfo procStartInfo = new ProcessStartInfo(Path.Combine(mRutaZipExe, "7z.exe"), $" x -y \"{Path.Combine("historial",pFecha,pNombre + pExtension)}\"");
+                    ProcessStartInfo procStartInfo = new ProcessStartInfo("unzip", $" \"{Path.Combine("historial",pFecha,pNombre + pExtension)}\"");
                     procStartInfo.RedirectStandardOutput = true;
                     procStartInfo.WorkingDirectory = rutaZip;
                     procStartInfo.UseShellExecute = false;
