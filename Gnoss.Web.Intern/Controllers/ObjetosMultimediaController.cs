@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -64,7 +65,7 @@ namespace Gnoss.Web.Intern.Controllers
             mRutaOntologias = Path.Combine(env.ContentRootPath, UtilArchivos.ContentOntologias);
 
             string rutaConfigs = Path.Combine(env.ContentRootPath, "config");
-            mRutaZipExe = Path.Combine(env.ContentRootPath, "/zip");
+            mRutaZipExe = Path.Combine(env.ContentRootPath, "zip");
 
 
             mAzureStorageConnectionString = _configService.ObtenerAzureStorageConnectionString();
@@ -86,7 +87,7 @@ namespace Gnoss.Web.Intern.Controllers
 
 
         [HttpPost]
-        [Route("add-zip")]
+        [Route("AgregarZIP")]
         public ActionResult AgregarZIP(Guid? pProyectoID, IFormFile file, string pNombreCarpeta = null)
         {
             BinaryReader sr = new BinaryReader(Request.Body);
@@ -125,8 +126,10 @@ namespace Gnoss.Web.Intern.Controllers
                 {
                     _fileOperationsService.GuardarLogError("Bytes del fichero: " + archivo.Length);
                 }
-
-                System.Diagnostics.ProcessStartInfo procStartInfo = new System.Diagnostics.ProcessStartInfo(Path.Combine(mRutaZipExe, "7z.exe"), $" x -y objetosMultimedia.zip");
+                //WIN
+                //System.Diagnostics.ProcessStartInfo procStartInfo = new System.Diagnostics.ProcessStartInfo(Path.Combine(mRutaZipExe, "7z.exe"), $" x -y objetosMultimedia.zip");
+                //LINUX
+                System.Diagnostics.ProcessStartInfo procStartInfo = new System.Diagnostics.ProcessStartInfo("unzip", $" x -y objetosMultimedia.zip");
                 procStartInfo.RedirectStandardOutput = true;
                 procStartInfo.WorkingDirectory = rutaZip;
                 procStartInfo.RedirectStandardOutput = true;
@@ -211,19 +214,19 @@ namespace Gnoss.Web.Intern.Controllers
         }
 
         [HttpPost]
-        [Route("download-zip")]
+        [Route("DescargarZIP")]
         public ActionResult DescargarZIP(Guid? pProyectoID, string pNombreCarpeta = null)
         {
             byte[] respuesta = null;
             // Ruta archivos en uso
             string personalizacion = (pProyectoID.HasValue ? pProyectoID.Value.ToString() : "ecosistema");
 
-            GuardarLogTest("Entra peticion descargaZip ObjetosMultimedia");
+            //GuardarLogTest("Entra peticion descargaZip ObjetosMultimedia");
 
             personalizacion = (string.IsNullOrEmpty(pNombreCarpeta) ? personalizacion : pNombreCarpeta);
 
             string ruta = Path.Combine("proyectos", "personalizacion", personalizacion, "cms");
-            GuardarLogTest("La ruta para la descarga de ObjetosMultimedia es: " + mRutaImagenes + "\\" + ruta);
+            //GuardarLogTest("La ruta para la descarga de ObjetosMultimedia es: " + mRutaImagenes + "\\" + ruta);
 
             try
             {
@@ -235,13 +238,14 @@ namespace Gnoss.Web.Intern.Controllers
                 }
 
                 string rutaZip = mGestorArchivos.ObtenerRutaDirectorioZip(ruta);
-
-                System.Diagnostics.ProcessStartInfo procStartInfo = new System.Diagnostics.ProcessStartInfo(Path.Combine(mRutaZipExe, "7z.exe"), " a ObjetosMultimedia.zip");
+                //WIN
+                //System.Diagnostics.ProcessStartInfo procStartInfo = new System.Diagnostics.ProcessStartInfo(Path.Combine(mRutaZipExe, "7z.exe"), " a ObjetosMultimedia.zip");
+                //LINUX
+                ProcessStartInfo procStartInfo = new ProcessStartInfo("zip", $"-r ObjetosMultimedia.zip . -i *");
                 procStartInfo.RedirectStandardOutput = true;
                 procStartInfo.WorkingDirectory = rutaZip;
                 procStartInfo.UseShellExecute = false;
                 procStartInfo.CreateNoWindow = false;
-
                 //Inicializa el proceso
                 System.Diagnostics.Process proc = new System.Diagnostics.Process();
                 proc.StartInfo = procStartInfo;
@@ -259,14 +263,12 @@ namespace Gnoss.Web.Intern.Controllers
                 {
                     System.IO.File.Delete(Path.Combine(mRutaImagenes, ruta, "ObjetosMultimedia.zip"));
                 }
-
                 return File(respuesta, "application/zip");
             }
             catch (Exception ex)
             {
                 _fileOperationsService.GuardarLogError(ex);
             }
-
             return null;
         }
 
