@@ -93,13 +93,71 @@ namespace Gnoss.Web.Intern
                 });
             }
             LoggingService.RUTA_DIRECTORIO_ERROR = Path.Combine(mEnvironment.ContentRootPath, "logs");
-            services.AddSwaggerGen(c =>
+			
+			// Autorizacion Identity Server
+            string authority = "";
+
+            if (environmentVariables.Contains("Authority"))
             {
+                authority = environmentVariables["Authority"] as string;
+            }
+            else
+            {
+                authority = Configuration["Authority"];
+            }
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(options =>
+            {
+                options.Authority = authority;
+                options.RequireHttpsMetadata = false;
+                options.Audience = "apiidentity";
+            });
+
+            services.AddAuthorization();
+            services.Configure<FormOptions>(o => {
+                o.ValueLengthLimit = int.MaxValue;
+                o.MultipartBodyLengthLimit = int.MaxValue;
+                o.MemoryBufferThreshold = int.MaxValue;
+            });
+            services.AddSwaggerGen(options =>
+            {
+                options.EnableAnnotations();
+                options.CustomSchemaIds(type => type.ToString());
+                options.SwaggerDoc("v1", new OpenApiInfo { Title = "Gnoss.Web.Intern", Version = "v1" });
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                c.IncludeXmlComments(xmlPath);
-                c.SwaggerDoc("interno", new OpenApiInfo { Title = "Gnoss.Web.Intern", Version = "v1" });
+
+                options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "JWT Authorization header using the Bearer scheme."
+                });
+                options.OperationFilter<SecurityRequirementsOperationFilter>();
             });
+
+#if !DEBUG
+            System.Diagnostics.ProcessStartInfo procStartInfo = new System.Diagnostics.ProcessStartInfo("service","nginx start");
+            // Indicamos que la salida del proceso se redireccione en un Stream
+            procStartInfo.RedirectStandardOutput = true;
+            procStartInfo.UseShellExecute = false;
+            //Indica que el proceso no despliegue una pantalla negra (El proceso se ejecuta en background)
+            procStartInfo.CreateNoWindow = false;
+            System.Diagnostics.Process proc = new System.Diagnostics.Process();
+            proc.StartInfo = procStartInfo;
+            proc.Start();
+            string result = proc.StandardOutput.ReadToEnd();
+            //Muestra en pantalla la salida del Comando
+            Console.WriteLine(result);
+#endif
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -109,6 +167,8 @@ namespace Gnoss.Web.Intern
             {
                 app.UseDeveloperExceptionPage();
             }
+
+			app.UseAuthentication();
 
             app.UseHttpsRedirection();
 
