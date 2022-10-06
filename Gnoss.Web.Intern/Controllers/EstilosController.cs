@@ -138,7 +138,7 @@ namespace Gnoss.Web.Intern.Controllers
 
                     string rutaZip = mGestorArchivos.ObtenerRutaDirectorioZip(ruta);
                     //ProcessStartInfo procStartInfo = new ProcessStartInfo(Path.Combine(mRutaZipExe, "7z.exe"), $" x -y \"{Path.Combine("historial",pFecha,pNombre + pExtension)}\"");
-                    ProcessStartInfo procStartInfo = new ProcessStartInfo("unzip", $" \"{Path.Combine("historial",pFecha,pNombre + pExtension)}\"");
+                    ProcessStartInfo procStartInfo = new ProcessStartInfo("unzip", $" -o \"{Path.Combine("historial",pFecha,pNombre + pExtension)}\"");
                     procStartInfo.RedirectStandardOutput = true;
                     procStartInfo.WorkingDirectory = rutaZip;
                     procStartInfo.UseShellExecute = false;
