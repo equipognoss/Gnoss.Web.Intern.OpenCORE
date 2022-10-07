@@ -14,6 +14,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Gnoss.Web.Intern.Controllers
@@ -135,7 +136,6 @@ namespace Gnoss.Web.Intern.Controllers
                     //{
                     //    mGestorArchivos.Descomprimir(pFichero, ruta);
                     //}
-
                     string rutaZip = mGestorArchivos.ObtenerRutaDirectorioZip(ruta);
                     //ProcessStartInfo procStartInfo = new ProcessStartInfo(Path.Combine(mRutaZipExe, "7z.exe"), $" x -y \"{Path.Combine("historial",pFecha,pNombre + pExtension)}\"");
                     ProcessStartInfo procStartInfo = new ProcessStartInfo("unzip", $" -o \"{Path.Combine("historial",pFecha,pNombre + pExtension)}\"");
@@ -150,6 +150,20 @@ namespace Gnoss.Web.Intern.Controllers
                     while (!proc.StandardOutput.EndOfStream)
                     {
                         string line = proc.StandardOutput.ReadLine();
+                    }
+
+                    ProcessStartInfo procStart = new ProcessStartInfo("chmod", $" 775 -R .");
+                    procStart.RedirectStandardOutput = true;
+                    procStart.WorkingDirectory = rutaZip;
+                    procStart.UseShellExecute = false;
+                    procStart.CreateNoWindow = false;
+                    //Inicializa el proceso
+                    Process process = new Process();
+                    process.StartInfo = procStart;
+                    process.Start();
+                    while (!process.StandardOutput.EndOfStream)
+                    {
+                        string line = process.StandardOutput.ReadLine();
                     }
 
                     if (pExtension.Equals(".nupkg"))
