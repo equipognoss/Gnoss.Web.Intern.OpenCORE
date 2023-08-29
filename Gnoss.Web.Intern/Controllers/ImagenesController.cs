@@ -70,8 +70,17 @@ namespace Gnoss.Web.Intern.Controllers
             mLoggingService = loggingService;
             _configService = configService;
 
-            mRutaImagenes = Path.Combine(env.ContentRootPath, UtilArchivos.ContentImagenes);
-            mRutaOntologias = Path.Combine(env.ContentRootPath, UtilArchivos.ContentOntologias);
+            mRutaImagenes = configService.GetRutaImagenes();
+            if (string.IsNullOrEmpty(mRutaImagenes))
+            {
+                mRutaImagenes = Path.Combine(env.ContentRootPath, UtilArchivos.ContentImagenes);
+            }
+
+            mRutaOntologias = configService.GetRutaOntologias();
+            if (string.IsNullOrEmpty(mRutaOntologias))
+            {
+                mRutaOntologias = Path.Combine(env.ContentRootPath, UtilArchivos.ContentOntologias);
+            }
             _fileOperationsService = new FileOperationsService(mLoggingService, mEnv);
             //string rutaConfigs = Path.Combine(env.ContentRootPath, "config");
 

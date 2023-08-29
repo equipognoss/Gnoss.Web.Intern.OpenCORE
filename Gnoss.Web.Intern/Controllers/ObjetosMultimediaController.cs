@@ -61,8 +61,17 @@ namespace Gnoss.Web.Intern.Controllers
             _env = env;
             _configService = configService;
 
-            mRutaImagenes = Path.Combine(env.ContentRootPath, UtilArchivos.ContentImagenes);
-            mRutaOntologias = Path.Combine(env.ContentRootPath, UtilArchivos.ContentOntologias);
+            mRutaImagenes = configService.GetRutaImagenes();
+            if (string.IsNullOrEmpty(mRutaImagenes))
+            {
+                mRutaImagenes = Path.Combine(env.ContentRootPath, UtilArchivos.ContentImagenes);
+            }
+
+            mRutaOntologias = configService.GetRutaOntologias();
+            if (string.IsNullOrEmpty(mRutaOntologias))
+            {
+                mRutaOntologias = Path.Combine(env.ContentRootPath, UtilArchivos.ContentOntologias);
+            }
 
             string rutaConfigs = Path.Combine(env.ContentRootPath, "config");
             mRutaZipExe = Path.Combine(env.ContentRootPath, "zip");
@@ -85,13 +94,13 @@ namespace Gnoss.Web.Intern.Controllers
         }
         #region Metodos
 
-
         [HttpPost]
+        [RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
         [Route("AgregarZIP")]
         public ActionResult AgregarZIP(Guid? pProyectoID, IFormFile file, string pNombreCarpeta = null)
         {
-            BinaryReader sr = new BinaryReader(Request.Body);
-            Byte[] pFichero = sr.ReadBytes((int)Request.Body.Length);
+
+            Byte[] pFichero = _fileOperationsService.ReadFileBytes(file);
             _fileOperationsService.GuardarLogError("Entra en el AgregarZIP");
 
             string personalizacion = (pProyectoID.HasValue ? pProyectoID.Value.ToString() : "ecosistema");
@@ -129,7 +138,7 @@ namespace Gnoss.Web.Intern.Controllers
                 //WIN
                 //System.Diagnostics.ProcessStartInfo procStartInfo = new System.Diagnostics.ProcessStartInfo(Path.Combine(mRutaZipExe, "7z.exe"), $" x -y objetosMultimedia.zip");
                 //LINUX
-                System.Diagnostics.ProcessStartInfo procStartInfo = new System.Diagnostics.ProcessStartInfo("unzip", $" x -y objetosMultimedia.zip");
+                System.Diagnostics.ProcessStartInfo procStartInfo = new System.Diagnostics.ProcessStartInfo("unzip", $" -o objetosMultimedia.zip");
                 procStartInfo.RedirectStandardOutput = true;
                 procStartInfo.WorkingDirectory = rutaZip;
                 procStartInfo.RedirectStandardOutput = true;
@@ -230,12 +239,12 @@ namespace Gnoss.Web.Intern.Controllers
 
             try
             {
-                AzureStorage azureStorage = null;
-                if (!string.IsNullOrEmpty(mAzureStorageConnectionString))
-                {
-                    GuardarLogTest("La cadena de conexion a Azure es: " + mAzureStorageConnectionString);
-                    azureStorage = new AzureStorage(mAzureStorageConnectionString);
-                }
+                //AzureStorage azureStorage = null;
+                //if (!string.IsNullOrEmpty(mAzureStorageConnectionString))
+                //{
+                //    GuardarLogTest("La cadena de conexion a Azure es: " + mAzureStorageConnectionString);
+                //    azureStorage = new AzureStorage(mAzureStorageConnectionString);
+                //}
 
                 string rutaZip = mGestorArchivos.ObtenerRutaDirectorioZip(ruta);
                 //WIN
@@ -268,8 +277,8 @@ namespace Gnoss.Web.Intern.Controllers
             catch (Exception ex)
             {
                 _fileOperationsService.GuardarLogError(ex);
+                return Content("ERROR");
             }
-            return null;
         }
 
       
