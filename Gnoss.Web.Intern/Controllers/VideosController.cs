@@ -1,4 +1,5 @@
 ﻿using Es.Riam.Gnoss.FileManager;
+using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.InterfacesOpenArchivos;
 using Gnoss.Web.Intern.Services;
@@ -44,18 +45,23 @@ namespace Gnoss.Web.Intern.Controllers
 
         #endregion
 
-        public VideosController(LoggingService loggingService, Conexion conexion, IHostingEnvironment env, IUtilArchivos utilArchivos)
+        public VideosController(LoggingService loggingService, Conexion conexion, IHostingEnvironment env, IUtilArchivos utilArchivos, ConfigService configService)
         {
             mLoggingService = loggingService;
             mConexion = conexion;
             
-            mRutaVideos = Path.Combine(env.ContentRootPath, "Videos");
-            mRutaConversionVideos = Path.Combine(env.ContentRootPath, "ReproductorVideo");
-            string rutaConfigs = Path.Combine(env.ContentRootPath, "config");
+            mRutaVideos = configService.GetRutaVideos();
+            if (string.IsNullOrEmpty(mRutaVideos))
+            {
+                mRutaVideos = Path.Combine(env.ContentRootPath, "Videos");
+            }
 
-            //mRutaVideos = this.Server.MapPath("~/" + "Videos");
-            //mRutaConversionVideos = this.Server.MapPath("~/" + "ReproductorVideo");
-            //string rutaConfigs = this.Server.MapPath("/config");
+            mRutaConversionVideos = configService.GetRutaReproductorVideo();
+            if (string.IsNullOrEmpty(mRutaConversionVideos))
+            {
+                mRutaConversionVideos = Path.Combine(env.ContentRootPath, "ReproductorVideo");
+            }
+            string rutaConfigs = Path.Combine(env.ContentRootPath, "config");
 
             mAzureStorageConnectionString = mConexion.ObtenerParametro("Config/gnoss.config", "config/AzureStorageConnectionString", false);
             if (!string.IsNullOrEmpty(mAzureStorageConnectionString))
@@ -279,7 +285,6 @@ namespace Gnoss.Web.Intern.Controllers
         private bool CrearFichero(IFormFile pBytes, string pNuevoNombre, Guid pCarpetaID, int pTipoVideo)
         {
             int codigo = 1;
-            byte[] pBytes2 = _fileOperationsService.ReadFileBytes(pBytes);
             string rutaFichero;
             DirectoryInfo directorio;
             if (pCarpetaID == Guid.Empty)
@@ -320,9 +325,16 @@ namespace Gnoss.Web.Intern.Controllers
             FileStream ficheroAGuardar = null;
             try
             {
+                Stream stream = pBytes.OpenReadStream();
+                byte[] buffer = new byte[1048576];
+                stream.Seek(0, SeekOrigin.Begin);
+                int num = 0;
                 ficheroAGuardar = new FileStream(rutaFichero, FileMode.Create, FileAccess.Write);
-                ficheroAGuardar.Write(pBytes2, 0, pBytes2.Length);
-                ficheroAGuardar.Flush();
+                while ((num = stream.Read(buffer, 0, 1048576)) > 0)
+                {
+                    ficheroAGuardar.Write(buffer, 0, num);
+                    ficheroAGuardar.Flush();
+                }
                 ficheroAGuardar.Close();
                 ficheroAGuardar.Dispose();
                 ficheroAGuardar = null;

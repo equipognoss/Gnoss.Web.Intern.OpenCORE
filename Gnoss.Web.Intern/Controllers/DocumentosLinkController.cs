@@ -53,7 +53,11 @@ namespace Gnoss.Web.Intern.Controllers
             _env = env;
             _configService = configService;
 
-            mRutaDocumentos = Path.Combine(env.ContentRootPath, UtilArchivos.ContentDocLinks);
+            mRutaDocumentos = configService.GetRutaDoclinks();
+            if (string.IsNullOrEmpty(mRutaDocumentos))
+            {
+                mRutaDocumentos = Path.Combine(env.ContentRootPath, UtilArchivos.ContentDocLinks);
+            }
             _fileOperationsService = new FileOperationsService(_loggingService, _env);
 
             mAzureStorageConnectionString = _configService.ObtenerAzureStorageConnectionString();
@@ -77,7 +81,11 @@ namespace Gnoss.Web.Intern.Controllers
             {
                 if (mRutaDocumentos == null)
                 {
-                    mRutaDocumentos = Path.Combine(_env.ContentRootPath, UtilArchivos.ContentDocLinks);
+                    mRutaDocumentos = _configService.GetRutaDoclinks();
+                    if (string.IsNullOrEmpty(mRutaDocumentos))
+                    {
+                        mRutaDocumentos = Path.Combine(_env.ContentRootPath, UtilArchivos.ContentDocLinks);
+                    }
                 }
 
                 return mRutaDocumentos;
@@ -99,7 +107,7 @@ namespace Gnoss.Web.Intern.Controllers
             try
             {
                 string directorio = UtilArchivos.DirectorioDocumento(pDocumentoID);
-                mGestorArchivos.CrearFicheroFisico(directorio, pNombre + pExtension, _fileOperationsService.ReadFileBytes(pBytes));
+                mGestorArchivos.CrearFicheroFisicoDesdeStream(directorio, pNombre + pExtension, pBytes.OpenReadStream());
                 return Ok(true);
             }
             catch (Exception ex)
@@ -128,6 +136,11 @@ namespace Gnoss.Web.Intern.Controllers
                     {
                         pFile.path = pFile.path.Substring("imagenes/".Length);
                     }
+                }
+                mGestorArchivos.RutaFicheros = _configService.GetRutaImagenes();
+                if (string.IsNullOrEmpty(mGestorArchivos.RutaFicheros))
+                {
+                    mGestorArchivos.RutaFicheros = Path.Combine(_env.ContentRootPath, UtilArchivos.ContentImagenes);
                 }
 
                 mGestorArchivos.CrearFicheroFisico(pFile.path, pFile.name + pFile.extension, pFile.file);

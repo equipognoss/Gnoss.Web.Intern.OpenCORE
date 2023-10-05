@@ -60,8 +60,19 @@ namespace Gnoss.Web.Intern.Controllers
             _configService = configService;
             _loggingService = loggingService;
             _httpContextAccessor = httpContextAccessor;
-            mRutaImagenes = Path.Combine(env.ContentRootPath, UtilArchivos.ContentImagenes);
-            mRutaOntologias = Path.Combine(env.ContentRootPath, UtilArchivos.ContentOntologias);
+
+            mRutaImagenes = configService.GetRutaImagenes();
+            if (string.IsNullOrEmpty(mRutaImagenes))
+            {
+                mRutaImagenes = Path.Combine(env.ContentRootPath, UtilArchivos.ContentImagenes);
+            }
+
+            mRutaOntologias = configService.GetRutaOntologias();
+            if (string.IsNullOrEmpty(mRutaOntologias))
+            {
+                mRutaOntologias = Path.Combine(env.ContentRootPath, UtilArchivos.ContentOntologias);
+            }
+            
             _env = env;
             _fileOperationsService = new FileOperationsService(_loggingService, _env);
 
@@ -94,8 +105,6 @@ namespace Gnoss.Web.Intern.Controllers
             string personalizacion = (pProyectoID.HasValue ? pProyectoID.Value.ToString() : "ecosistema");
 
             personalizacion = (string.IsNullOrEmpty(pNombreCarpeta) ? personalizacion : pNombreCarpeta);
-
-            byte[] pFichero = _fileOperationsService.ReadFileBytes(file);
             // Ruta archivos en uso
             string ruta;
             // Ruta raiz de historial
@@ -123,7 +132,7 @@ namespace Gnoss.Web.Intern.Controllers
                         CrearCopiaInicial(rutaRaizVersiones, ruta, pFecha);
                     }
 
-                    mGestorArchivos.CrearFicheroFisico(rutaVersion, pNombre + pExtension, pFichero);
+                    mGestorArchivos.CrearFicheroFisicoDesdeStream(rutaVersion, pNombre + pExtension, file.OpenReadStream());
 
                     string rutaFichero = Path.Combine(mRutaImagenes, rutaVersion, pNombre + pExtension);
                     string rutaDescomprimir = Path.Combine(mRutaImagenes, ruta);
@@ -253,12 +262,12 @@ namespace Gnoss.Web.Intern.Controllers
             try
             {
 
-                AzureStorage azureStorage = null;
-                if (!string.IsNullOrEmpty(mAzureStorageConnectionString))
-                {
-                    GuardarLogTest("La cadena de conexion a Azure es: " + mAzureStorageConnectionString);
-                    azureStorage = new AzureStorage(mAzureStorageConnectionString);
-                }
+                //AzureStorage azureStorage = null;
+                //if (!string.IsNullOrEmpty(mAzureStorageConnectionString))
+                //{
+                //    GuardarLogTest("La cadena de conexion a Azure es: " + mAzureStorageConnectionString);
+                //    azureStorage = new AzureStorage(mAzureStorageConnectionString);
+                //}
                 string[] rutasArchivos = mGestorArchivos.ObtenerFicherosDeDirectorioYSubDirectorios(ruta).Result;
                 using (var ms = new MemoryStream())
                 {
@@ -268,7 +277,7 @@ namespace Gnoss.Web.Intern.Controllers
                         {
                             if ((!archivo.StartsWith("versiones") && !archivo.StartsWith("historial") && !archivo.StartsWith("cms")) && ((!pCss && !pImagenes) || (!(!pCss && !pImagenes) && ((pCss && !CoomprobarFicheroMultimedia(archivo)) || (pImagenes && CoomprobarFicheroMultimedia(archivo))))))
                             {
-                                if (azureStorage == null)
+                                //if (azureStorage == null)
                                 {
                                     byte[] bytes = System.IO.File.ReadAllBytes(Path.Combine(mRutaImagenes, ruta, archivo));
                                     var entry = zipArchive.CreateEntry(archivo);
@@ -283,21 +292,21 @@ namespace Gnoss.Web.Intern.Controllers
                                     entry = null;
                                     bytes = null;
                                 }
-                                else
-                                {
-                                    byte[] bytes = azureStorage.DescargarDocumentoSubdirectorios(ruta, archivo).Result;
-                                    var entry = zipArchive.CreateEntry(archivo);
-                                    using (Stream s = entry.Open())
-                                    {
-                                        if (bytes.Length <= 50 * 1024 * 1024)
-                                        {
-                                            s.Write(bytes, 0, bytes.Length);
-                                            s.Flush();
-                                        }
-                                    }
-                                    entry = null;
-                                    bytes = null;
-                                }
+                                //else
+                                //{
+                                //    byte[] bytes = azureStorage.DescargarDocumentoSubdirectorios(ruta, archivo).Result;
+                                //    var entry = zipArchive.CreateEntry(archivo);
+                                //    using (Stream s = entry.Open())
+                                //    {
+                                //        if (bytes.Length <= 50 * 1024 * 1024)
+                                //        {
+                                //            s.Write(bytes, 0, bytes.Length);
+                                //            s.Flush();
+                                //        }
+                                //    }
+                                //    entry = null;
+                                //    bytes = null;
+                                //}
                             }
                         }
                     }
@@ -307,15 +316,14 @@ namespace Gnoss.Web.Intern.Controllers
                 }
 
                 rutasArchivos = null;
-
                 return File(respuesta, "application/zip");
 
             }
             catch (Exception ex)
             {
+                _loggingService.GuardarLogError(ex);
                 _fileOperationsService.GuardarLogError(ex);
             }
-
             return null;
         }
 
@@ -427,12 +435,12 @@ namespace Gnoss.Web.Intern.Controllers
             try
             {
 
-                AzureStorage azureStorage = null;
-                if (!string.IsNullOrEmpty(mAzureStorageConnectionString))
-                {
-                    GuardarLogTest("La cadena de conexion a Azure es: " + mAzureStorageConnectionString);
-                    azureStorage = new AzureStorage(mAzureStorageConnectionString);
-                }
+                //AzureStorage azureStorage = null;
+                //if (!string.IsNullOrEmpty(mAzureStorageConnectionString))
+                //{
+                //    GuardarLogTest("La cadena de conexion a Azure es: " + mAzureStorageConnectionString);
+                //    azureStorage = new AzureStorage(mAzureStorageConnectionString);
+                //}
                 string[] rutasArchivos = mGestorArchivos.ObtenerFicherosDeDirectorioYSubDirectorios(ruta).Result;
                 using (var ms = new MemoryStream())
                 {
