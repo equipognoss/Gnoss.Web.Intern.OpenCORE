@@ -13,6 +13,8 @@ namespace Gnoss.Web.Intern
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .UseWindowsService() //Windows
+                .UseSystemd() //Linux
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();

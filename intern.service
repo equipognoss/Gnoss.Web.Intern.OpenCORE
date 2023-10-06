@@ -1,0 +1,13 @@
+[Unit]
+Description=Intern API for files
+
+[Service]
+WorkingDirectory=/home/gnoss/docker_pruebas/Intern.auto.contenido
+Restart=always
+ExecStart=/home/gnoss/docker_pruebas/Intern.auto.contenido/Gnoss.Web.Intern
+User=gnoss
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=https://localhost:5003;http://localhost:5002
+
+[Install]
+WantedBy=multi-user.target
