@@ -1,0 +1,67 @@
+Creamos un proyecto 
+	de tipo Aplicacion web ASP .NET CORE
+	NOmbre y la ruta
+	Se le da a crear
+	tipo de proyecto .Net Core -> ASP.NET 3.1
+	Se elige API
+
+Se borra la clase WheaterForecast y su controlador
+empezamos por parte de base datos
+Creamos la carpeta models
+	creamos la carpeta Entities
+	y creamos las clases del model de base de datos
+	Creamos en el modelBuilder las relaciones
+creamos el esqueleto de los controladores
+	agregamos controladores de tipo API
+	Instalamos paquetes de swagger
+		Swashbuckle.AspNetCore
+		Swashbuckle.AspNetCore.Annotations
+		Swashbuckle.AspNetCore.Filters
+		Swashbuckle.AspNetCore.Swagger
+		Swashbuckle.AspNetCore.SwaggerGen
+		Swashbuckle.AspNetCore.SwaggerUI
+	agregamos el swagger al startup
+		ConfigureServices
+		services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo { Title = "api peliculas", Version = "v1" });
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                options.IncludeXmlComments(xmlPath);
+            });
+		
+		Configure
+			app.UseSwagger(c =>
+            		{
+                		c.PreSerializeFilters.Add((swaggerDoc, httpReq) => swaggerDoc.Servers = new List<OpenApiServer>
+                      		{
+                       			 new OpenApiServer { Url = $"/" }
+                      		});
+           		 });
+            		app.UseSwaggerUI(c =>
+            		{
+                		c.SwaggerEndpoint("v1/swagger.json", "api peliculas");
+            		});
+
+		Cambiar en propiedas del proyecto -> depurar -> iniciar explorador -> swagger
+		En el csproj añadir <GenerateDocumentationFile>true</GenerateDocumentationFile> en la parte de propertyGroup
+Arrancar para ver el swagger y las descripciones
+Añadimos el contexto y añadimos los paquetes de EntityFramework core
+	Microsoft.EntityFrameworkCore 
+	Microsoft.EntityFrameworkCore.Tools
+	Microsoft.EntityFrameworkCore.SqlServer
+Añadimos al appsettings la conexion
+Añadir al startup la conexion
+
+Crear la migracion inicial con ADD-Migration
+
+
+Crear interfacez y servicios para el acceso a datos
+primero la parte de peliclas
+luego director se hace el primer join y luego los extendidos
+poner los scoped en el startup.cs
+arrncar y probar
+
+
+Crear una solución de Test (XUNit)
+Creamos un mock para el servicio de peliculas
