@@ -154,6 +154,37 @@ namespace Gnoss.Web.Intern.Controllers
             }
         }
 
+        [HttpDelete]
+        [Route("remove-document-to-directory")]
+        public IActionResult EliminarDocumentoDeDirectorio(GnossFile pFile)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(mAzureStorageConnectionString))
+                {
+                    mAzureStorageConnectionString = "";
+
+                    if (pFile.path.StartsWith("imagenes/"))
+                    {
+                        pFile.path = pFile.path.Substring("imagenes/".Length);
+                    }
+                }
+                mGestorArchivos.RutaFicheros = _configService.GetRutaImagenes();
+                if (string.IsNullOrEmpty(mGestorArchivos.RutaFicheros))
+                {
+                    mGestorArchivos.RutaFicheros = Path.Combine(_env.ContentRootPath, UtilArchivos.ContentImagenes);
+                }
+                mGestorArchivos.EliminarFicheroFisico(pFile.path, pFile.name + pFile.extension);
+
+                return Ok("OK");
+            }
+            catch (Exception ex)
+            {
+                _fileOperationsService.GuardarLogError(ex);
+                return BadRequest("KO");
+            }
+        }
+
         /// <summary>
         /// Borra el documento de su directorio
         /// </summary>

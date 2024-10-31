@@ -106,6 +106,7 @@ namespace Gnoss.Web.Intern.Controllers
         #region Métodos web
 
         [HttpPost]
+        [DisableRequestSizeLimit, RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
         [Route("add-image")]
         public IActionResult AgregarImagen(GnossImage pImagen)
         {
@@ -136,6 +137,7 @@ namespace Gnoss.Web.Intern.Controllers
         /// <param name="pNombreVersion">Nombre de la nueva versión</param>
         /// <returns></returns>
         [HttpPost]
+        [DisableRequestSizeLimit, RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
         [Route("AgregarJS")]
         public IActionResult AgregarJS(Byte[] pFichero, string pNombre, string pExtension, Guid pProyectoID, string pFecha, string pNombreVersion = null)
         {
@@ -196,6 +198,7 @@ namespace Gnoss.Web.Intern.Controllers
         /// <param name="pNombreVersion">Nombre de la nueva versión</param>
         /// <returns></returns>
         [HttpPost]
+        [DisableRequestSizeLimit, RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
         [Route("AgregarCSS")]
         public IActionResult AgregarCSS(Byte[] pFichero, string pNombre, string pExtension, Guid pProyectoID, string pFecha, string pNombreVersion = null)
         {
@@ -255,6 +258,7 @@ namespace Gnoss.Web.Intern.Controllers
         /// <param name="pNombreVersion">Nombre de la nueva versión</param>
         /// <returns></returns>
         [HttpPost]
+        [DisableRequestSizeLimit, RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
         [Route("AgregarZIP")]
         public IActionResult AgregarZIP(Byte[] pFichero, string pNombre, string pExtension, Guid pProyectoID, string pFecha, string pNombreVersion = null)
         {
@@ -536,6 +540,7 @@ namespace Gnoss.Web.Intern.Controllers
         /// <param name="pExtension">Extensión de la imágen</param>
         /// <returns>TRUE si todo ha ido bien, false en caso contario</returns>
         [HttpPost]
+        [DisableRequestSizeLimit, RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
         [Route("AgregarImagenEnMiniaturaADocumento")]
         public IActionResult AgregarImagenEnMiniaturaADocumento(GnossPersonImage pImagen)
         {
@@ -573,6 +578,7 @@ namespace Gnoss.Web.Intern.Controllers
         }
 
         [HttpPost]
+        [DisableRequestSizeLimit, RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
         [Route("add-image-to-personal-document")]
         public IActionResult AgregarImagenDocumentoPersonal(GnossPersonImage pImagen)
         {
@@ -590,6 +596,7 @@ namespace Gnoss.Web.Intern.Controllers
         }
 
         [HttpPost]
+        [DisableRequestSizeLimit, RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
         [Route("add-image-to-organization-document")]
         public IActionResult AgregarImagenDocumentoOrganizacion(OrganizationPersonImage pImagen)
         {
@@ -607,6 +614,7 @@ namespace Gnoss.Web.Intern.Controllers
         }
 
         [HttpPost]
+        [DisableRequestSizeLimit, RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
         [Route("add-image-to-directory")]
         public IActionResult AgregarImagenADirectorio(GnossImage pImagen)
         {
@@ -632,6 +640,7 @@ namespace Gnoss.Web.Intern.Controllers
         }
 
         [HttpPost]
+        [DisableRequestSizeLimit, RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
         [Route("add-image-to-ontology-directory")]
         public IActionResult AgregarImagenADirectorioOntologia(GnossImage pImagen)
         {
