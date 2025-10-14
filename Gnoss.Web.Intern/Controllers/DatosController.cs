@@ -6,6 +6,7 @@ using Es.Riam.Gnoss.AD.EntityModel.Models.IdentidadDS;
 using Es.Riam.Gnoss.AD.ParametroAplicacion;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.CL.Trazas;
 using Es.Riam.Gnoss.Logica.Identidad;
 using Es.Riam.Gnoss.Logica.Usuarios;
@@ -46,18 +47,21 @@ namespace Gnoss.Web.Intern.Controllers
         private IServicesUtilVirtuosoAndReplication mServicesUtilVirtuosoAndReplication;
         private static object BLOQUEO_COMPROBACION_TRAZA = new object();
         private static DateTime HORA_COMPROBACION_TRAZA;
-
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
         #region Constructores
 
         /// <summary>
         /// Constructor sin parámetros
         /// </summary>
-        public DatosController(Conexion conexion, LoggingService loggingService, EntityContext entityContext, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication)
+        public DatosController(Conexion conexion, LoggingService loggingService, EntityContext entityContext, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, ILogger<DatosController> logger, ILoggerFactory loggerFactory)
         {
             _conexion = conexion;
             _loggingService = loggingService;
             _entityContext = entityContext;
             mServicesUtilVirtuosoAndReplication = servicesUtilVirtuosoAndReplication;
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
 
             //Eliminar la marca de comentario de la línea siguiente si utiliza los componentes diseñados 
             //InitializeComponent();
@@ -108,10 +112,10 @@ namespace Gnoss.Web.Intern.Controllers
         public void ActualizarPerfilUsuario(Guid pUsuarioID, Guid pPerfilID)
         {
             //IdentidadCN identidadCN = new IdentidadCN("acid", true);
-            IdentidadCN identidadCN = new IdentidadCN(_entityContext, _loggingService, _configService, mServicesUtilVirtuosoAndReplication);
+            IdentidadCN identidadCN = new IdentidadCN(_entityContext, _loggingService, _configService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             if (pPerfilID.Equals(Guid.Empty))
             {
-                UsuarioCN usuarioCN = new UsuarioCN(_entityContext, _loggingService, _configService, mServicesUtilVirtuosoAndReplication);
+                UsuarioCN usuarioCN = new UsuarioCN(_entityContext, _loggingService, _configService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
                 string login = usuarioCN.ObtenerUsuarioPorID(pUsuarioID).Login;
                 usuarioCN.Dispose();
                 pPerfilID = identidadCN.ObtenerIdentidadIDDeUsuarioEnProyectoYOrg(login, ProyectoAD.MetaProyecto, string.Empty, false)[1];
@@ -186,7 +190,7 @@ namespace Gnoss.Web.Intern.Controllers
                     if (DateTime.Now > HORA_COMPROBACION_TRAZA)
                     {
                         HORA_COMPROBACION_TRAZA = DateTime.Now.AddSeconds(15);
-                        TrazasCL trazasCL = new TrazasCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication);
+                        TrazasCL trazasCL = new TrazasCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TrazasCL>(), mLoggerFactory);
                         string tiempoTrazaResultados = trazasCL.ObtenerTrazaEnCache("intern");
 
                         if (!string.IsNullOrEmpty(tiempoTrazaResultados))

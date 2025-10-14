@@ -1,4 +1,5 @@
-﻿using Es.Riam.Gnoss.FileManager;
+﻿using Es.Riam.Gnoss.CL.ServiciosGenerales;
+using Es.Riam.Gnoss.FileManager;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.InterfacesOpenArchivos;
@@ -8,8 +9,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace Gnoss.Web.Intern.Controllers
 {
@@ -37,27 +40,32 @@ namespace Gnoss.Web.Intern.Controllers
         public static string mAzureStorageConnectionString;
         private LoggingService mLoggingService;
         private Conexion mConexion;
-
+        private GestionArchivos mGestorArchivos;
+        private ConfigService mConfigService;
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
         #endregion
 
-        public VideosController(LoggingService loggingService, Conexion conexion, IHostingEnvironment env, IUtilArchivos utilArchivos, ConfigService configService)
+        public VideosController(LoggingService loggingService, Conexion conexion, IHostingEnvironment env, IUtilArchivos utilArchivos, ConfigService configService, ILogger<VideosController> logger, ILoggerFactory loggerFactory)
         {
             mLoggingService = loggingService;
             mConexion = conexion;
-            
+            mConfigService = configService;
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
             mRutaVideos = configService.GetRutaVideos();
             if (string.IsNullOrEmpty(mRutaVideos))
             {
                 mRutaVideos = Path.Combine(env.ContentRootPath, "Videos");
             }
 
-            mRutaConversionVideos = configService.GetRutaReproductorVideo();
+            mRutaConversionVideos = mConfigService.GetRutaReproductorVideo();
             if (string.IsNullOrEmpty(mRutaConversionVideos))
             {
                 mRutaConversionVideos = Path.Combine(env.ContentRootPath, "ReproductorVideo");
             }
 
-            mAzureStorageConnectionString = configService.ObtenerAzureStorageConnectionString();
+            mAzureStorageConnectionString = mConfigService.ObtenerAzureStorageConnectionString();
             if (!string.IsNullOrEmpty(mAzureStorageConnectionString))
             {
                 mAzureStorageConnectionString = $"{mAzureStorageConnectionString}/Videos";
@@ -66,6 +74,8 @@ namespace Gnoss.Web.Intern.Controllers
             {
                 mAzureStorageConnectionString = "";
             }
+
+            mGestorArchivos = new GestionArchivos(loggingService, utilArchivos, mLoggerFactory.CreateLogger<GestionArchivos>(), mLoggerFactory, pRutaArchivos: mRutaVideos, pAzureStorageConnectionString: mAzureStorageConnectionString);
         }
 
         #region Métodos web
@@ -202,6 +212,85 @@ namespace Gnoss.Web.Intern.Controllers
             catch (Exception ex)
             {
                 mLoggingService.GuardarLogError(ex, $"Error al obtener el vídeo {pDocumentoID} de la persona {pPersonaID}");
+                return StatusCode(500);
+            }
+        }
+
+        /// <summary>
+        /// Elimina los videos de un recurso
+        /// </summary>
+        /// <param name="pRuta">Directorio donde se encuentran los videos que hay que eliminar</param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("BorrarVideosDeRecurso")]
+        public int BorrarVideosDeRecurso(string pRuta)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(pRuta) && mGestorArchivos.ComprobarExisteDirectorio(pRuta).Result)
+                {
+                    mGestorArchivos.EliminarDirectorioEnCascada(pRuta);
+                }
+
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, $"Error al eliminar los videos de la ruta: '{pRuta}'");
+                return 0;
+            }
+        }
+
+        [HttpGet]
+        [Route("move-videos-deleted-resource")]
+        public async Task<IActionResult> MoverVideosRecursoEliminadoOtroAlmacenamiento(string relative_path, Guid pDocumentoID)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(relative_path) && mGestorArchivos.ComprobarExisteDirectorio(relative_path).Result)
+                {
+                    string rutaTemporal = Path.Combine(GestionArchivos.ObtenerRutaFicherosDeRecursosTemporal(pDocumentoID), UtilArchivos.ContentVideosSemanticos);
+                    mGestorArchivos.MoverContenidoDirectorio(relative_path, rutaTemporal);
+
+                    return Ok();
+                }
+                else
+                {
+                    mLoggingService.GuardarLog($"El directorio {relative_path} no existe.");
+                    return new EmptyResult();
+                }
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, $"Error al mover los videos del directorio '{relative_path}'");
+                return StatusCode(500);
+            }
+        }
+
+        [HttpGet]
+        [Route("move-video-modified-resource")]
+        public async Task<IActionResult> MoverVideoRecursoModificadoOtroAlmacenamiento(string pVideo, Guid pDocumentoID)
+        {
+            try
+            {
+                string rutaDocumento = Path.Combine(mRutaVideos, UtilArchivos.ContentVideosSemanticos, UtilArchivos.DirectorioDocumento(pDocumentoID));
+                DirectoryInfo dirInfoRaiz = new DirectoryInfo(rutaDocumento);
+                FileInfo[] ficheros = dirInfoRaiz.GetFiles();
+
+                foreach (FileInfo fichero in ficheros)
+                {
+                    string rutaTemporal = Path.Combine(UtilArchivos.ContentTemporales, pVideo);
+                    if (fichero.Exists && !fichero.FullName.Contains(pVideo))
+                    {
+                        mGestorArchivos.MoverArchivo(pVideo, rutaTemporal);
+                    }
+                }
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, $"Error al mover el video {pVideo} del recurso modificado '{pDocumentoID}'");
                 return StatusCode(500);
             }
         }

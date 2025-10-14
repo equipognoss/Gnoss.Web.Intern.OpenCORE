@@ -46,7 +46,7 @@ namespace Gnoss.Web.Intern.Services
         /// <param name="pError">Cadena de texto con el error</param>
         public void GuardarLogError(string pMensaje)
         {
-            string directorio = Path.Combine(_env.ContentRootPath, "/logs");
+            string directorio = Path.Combine(_env.ContentRootPath, "logs");
             //string directorio = HttpContext.Current.Server.MapPath(HttpContext.Current.Request.ApplicationPath + "/logs");
             string fichero = Path.Combine(directorio, "error_" + DateTime.Now.ToString("yyyy-MM-dd") + ".log");
 

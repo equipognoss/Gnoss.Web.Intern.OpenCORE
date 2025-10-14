@@ -1,4 +1,5 @@
-﻿using Es.Riam.Gnoss.FileManager;
+﻿using Es.Riam.Gnoss.CL.ServiciosGenerales;
+using Es.Riam.Gnoss.FileManager;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.InterfacesOpenArchivos;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -52,15 +54,17 @@ namespace Gnoss.Web.Intern.Controllers
         private ConfigService _configService;
         private FileOperationsService _fileOperationsService;
         private IUtilArchivos _utilArchivos;
-
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
         #endregion
-        public ObjetosMultimediaController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IHostingEnvironment env, ConfigService configService, IUtilArchivos utilArchivos)
+        public ObjetosMultimediaController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IHostingEnvironment env, ConfigService configService, IUtilArchivos utilArchivos, ILogger<ObjetosMultimediaController> logger, ILoggerFactory loggerFactory)
         {
             _loggingService = loggingService;
             _httpContextAccessor = httpContextAccessor;
             _env = env;
             _configService = configService;
-
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
             mRutaImagenes = configService.GetRutaImagenes();
             if (string.IsNullOrEmpty(mRutaImagenes))
             {
@@ -88,7 +92,7 @@ namespace Gnoss.Web.Intern.Controllers
                 mAzureStorageConnectionString = "";
             }
             _utilArchivos = utilArchivos;
-            mGestorArchivos = new GestionArchivos(_loggingService, utilArchivos, pRutaArchivos: mRutaImagenes, pAzureStorageConnectionString: mAzureStorageConnectionString);
+            mGestorArchivos = new GestionArchivos(_loggingService, utilArchivos, mLoggerFactory.CreateLogger<GestionArchivos>(), mLoggerFactory, pRutaArchivos: mRutaImagenes, pAzureStorageConnectionString: mAzureStorageConnectionString);
             _fileOperationsService = new FileOperationsService(_loggingService, _env);
 
         }

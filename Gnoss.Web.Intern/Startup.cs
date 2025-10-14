@@ -1,10 +1,14 @@
 using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.EntityModel;
+using Es.Riam.Gnoss.AD.Virtuoso;
+using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.RelatedVirtuoso;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Util.Seguridad;
+using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpenArchivos;
+using Es.Riam.Open;
 using Es.Riam.OpenArchivos;
 using Es.Riam.OpenReplication;
 using Es.Riam.Util;
@@ -62,12 +66,15 @@ namespace Gnoss.Web.Intern
             services.AddScoped(typeof(Usuario));
             services.AddScoped(typeof(UtilPeticion));
             services.AddScoped(typeof(Conexion));
+            services.AddScoped(typeof(VirtuosoAD));
             services.AddScoped(typeof(UtilGeneral));
             services.AddScoped(typeof(LoggingService));
+            services.AddScoped(typeof(RedisCacheWrapper));
             services.AddScoped(typeof(Configuracion));
             services.AddScoped<IUtilArchivos, UtilArchivosOpen>();
             services.AddScoped<IServicesUtilVirtuosoAndReplication, ServicesVirtuosoAndBidirectionalReplicationOpen>();
             services.AddScoped(typeof(RelatedVirtuosoCL));
+            services.AddScoped<IAvailableServices, AvailableServicesOpen>();
             string bdType = "";
             IDictionary environmentVariables = Environment.GetEnvironmentVariables();
 
@@ -97,7 +104,7 @@ namespace Gnoss.Web.Intern
             if (bdType.Equals("0"))
             {
                 services.AddDbContext<EntityContext>(options =>
-                        options.UseSqlServer(acid)
+                        options.UseSqlServer(acid, o => o.UseCompatibilityLevel(110))
                         );
             }
 			else if (bdType.Equals("1"))
@@ -167,21 +174,6 @@ namespace Gnoss.Web.Intern
                 options.OperationFilter<SecurityRequirementsOperationFilter>();
             });
 
-#if !DEBUG
-            System.Diagnostics.ProcessStartInfo procStartInfo = new System.Diagnostics.ProcessStartInfo("service","nginx start");
-            // Indicamos que la salida del proceso se redireccione en un Stream
-            procStartInfo.RedirectStandardOutput = true;
-            procStartInfo.UseShellExecute = false;
-            //Indica que el proceso no despliegue una pantalla negra (El proceso se ejecuta en background)
-            procStartInfo.CreateNoWindow = false;
-            System.Diagnostics.Process proc = new System.Diagnostics.Process();
-            proc.StartInfo = procStartInfo;
-            proc.Start();
-            string result = proc.StandardOutput.ReadToEnd();
-            //Muestra en pantalla la salida del Comando
-            Console.WriteLine(result);
-#endif
-
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -207,7 +199,7 @@ namespace Gnoss.Web.Intern
                     new OpenApiServer { Url = $"/" }
                 });
             });
-            app.UseSwaggerUI(c => c.SwaggerEndpoint("interno/swagger.json", "Gnoss.Web.Intern v1"));
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("v1/swagger.json", "Gnoss.Web.Intern v1"));
 
 
             app.UseEndpoints(endpoints =>

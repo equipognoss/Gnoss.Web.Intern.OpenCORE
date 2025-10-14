@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -52,15 +53,17 @@ namespace Gnoss.Web.Intern.Controllers
         private GestionArchivos mGestorArchivosOntologias;
         private FileOperationsService _fileOperationsService;
         private IUtilArchivos _utilArchivos;
-
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
         #endregion
 
-        public EstilosController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IHostingEnvironment env, ConfigService configService, IUtilArchivos utilArchivos)
+        public EstilosController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IHostingEnvironment env, ConfigService configService, IUtilArchivos utilArchivos, ILogger<EstilosController> logger, ILoggerFactory loggerFactory)
         {
             _configService = configService;
             _loggingService = loggingService;
             _httpContextAccessor = httpContextAccessor;
-
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
             mRutaImagenes = configService.GetRutaImagenes();
             if (string.IsNullOrEmpty(mRutaImagenes))
             {
@@ -90,8 +93,8 @@ namespace Gnoss.Web.Intern.Controllers
                 mAzureStorageConnectionString = "";
             }
             _utilArchivos = utilArchivos;
-            mGestorArchivos = new GestionArchivos(loggingService, utilArchivos, pRutaArchivos: mRutaImagenes, pAzureStorageConnectionString: mAzureStorageConnectionString);
-            mGestorArchivosOntologias = new GestionArchivos(loggingService, utilArchivos, pRutaArchivos: mRutaOntologias, pAzureStorageConnectionString: mAzureStorageConnectionStringOntologias);
+            mGestorArchivos = new GestionArchivos(loggingService, utilArchivos, mLoggerFactory.CreateLogger<GestionArchivos>(), mLoggerFactory, pRutaArchivos: mRutaImagenes, pAzureStorageConnectionString: mAzureStorageConnectionString);
+            mGestorArchivosOntologias = new GestionArchivos(loggingService, utilArchivos, mLoggerFactory.CreateLogger<GestionArchivos>(), mLoggerFactory, pRutaArchivos: mRutaOntologias, pAzureStorageConnectionString: mAzureStorageConnectionStringOntologias);
         }
 
         #region Metodos

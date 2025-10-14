@@ -1,4 +1,5 @@
-﻿using Es.Riam.Gnoss.FileManager;
+﻿using Es.Riam.Gnoss.CL.ServiciosGenerales;
+using Es.Riam.Gnoss.FileManager;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper.Model;
@@ -9,8 +10,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace Gnoss.Web.Intern.Controllers
 {
@@ -41,18 +44,20 @@ namespace Gnoss.Web.Intern.Controllers
         private ConfigService _configService;
         private FileOperationsService _fileOperationsService;
         private IUtilArchivos _utilArchivos;
-
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
         #endregion
 
         #region Constructor
 
-        public DocumentosLinkController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IHostingEnvironment env, ConfigService configService, IUtilArchivos utilArchivos)
+        public DocumentosLinkController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IHostingEnvironment env, ConfigService configService, IUtilArchivos utilArchivos, ILogger<DocumentosLinkController> logger, ILoggerFactory loggerFactory)
         {
             _loggingService = loggingService;
             _httpContextAccessor = httpContextAccessor;
             _env = env;
             _configService = configService;
-
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
             mRutaDocumentos = configService.GetRutaDoclinks();
             if (string.IsNullOrEmpty(mRutaDocumentos))
             {
@@ -71,26 +76,11 @@ namespace Gnoss.Web.Intern.Controllers
                 mAzureStorageConnectionString = "";
             }
             _utilArchivos = utilArchivos;
-            mGestorArchivos = new GestionArchivos(_loggingService, utilArchivos, pRutaArchivos: mRutaDocumentos, pAzureStorageConnectionString: mAzureStorageConnectionString);
+            mGestorArchivos = new GestionArchivos(_loggingService, utilArchivos, mLoggerFactory.CreateLogger<GestionArchivos>(), mLoggerFactory, pRutaArchivos: mRutaDocumentos, pAzureStorageConnectionString: mAzureStorageConnectionString);
         }
 
         #endregion
-        public string RutaDocumentos
-        {
-            get
-            {
-                if (mRutaDocumentos == null)
-                {
-                    mRutaDocumentos = _configService.GetRutaDoclinks();
-                    if (string.IsNullOrEmpty(mRutaDocumentos))
-                    {
-                        mRutaDocumentos = Path.Combine(_env.ContentRootPath, UtilArchivos.ContentDocLinks);
-                    }
-                }
 
-                return mRutaDocumentos;
-            }
-        }
         #region Métodos web
 
         /// <summary>
@@ -216,7 +206,7 @@ namespace Gnoss.Web.Intern.Controllers
         /// </summary>
         /// <param name="pDocumentoID">identificador del documento</param>
         /// <returns>True si ha borrado correctamente. False en caso contrario</returns>
-        [HttpDelete]
+        [HttpGet]
         [Route("BorrarDirectorioDeDocumento")]
         public IActionResult BorrarDirectorioDeDocumento(Guid pDocumentoID)
         {
@@ -232,6 +222,59 @@ namespace Gnoss.Web.Intern.Controllers
             {
                 _fileOperationsService.GuardarLogError(ex);
                 return Ok(false);
+            }
+        }
+
+        [HttpGet]
+        [Route("move-doclinks-deleted-resource")]
+        public async Task<IActionResult> MoverDocLinksRecursoEliminadoOtroAlmacenamiento(string relative_path, Guid pDocumentoID)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(relative_path) && mGestorArchivos.ComprobarExisteDirectorio(relative_path).Result)
+                {
+                    string rutaTemporal = Path.Combine(GestionArchivos.ObtenerRutaFicherosDeRecursosTemporal(pDocumentoID), UtilArchivos.ContentDocLinks);
+                    mGestorArchivos.MoverContenidoDirectorio(relative_path, rutaTemporal);
+                    return Ok();
+                }
+                else
+                {
+                    _loggingService.GuardarLog($"El directorio {relative_path} no existe.");
+                    return new EmptyResult();
+                }
+            }
+            catch (Exception ex)
+            {
+                _loggingService.GuardarLogError(ex, $"Error al mover los documentos link del directorio '{relative_path}'");
+                return StatusCode(500);
+            }
+        }
+
+        [HttpGet]
+        [Route("move-doclink-modified-resource")]
+        public async Task<IActionResult> MoverDocLinkRecursoModificadoOtroAlmacenamiento(string pDocLink, Guid pDocumentoID)
+        {
+            try
+            {
+                string rutaDocumento = Path.Combine(mRutaDocumentos, UtilArchivos.ContentDocLinks, UtilArchivos.DirectorioDocumento(pDocumentoID));
+                DirectoryInfo dirInfoRaiz = new DirectoryInfo(rutaDocumento);
+                FileInfo[] ficheros = dirInfoRaiz.GetFiles();
+
+                foreach (FileInfo fichero in ficheros)
+                {
+                    string rutaTemporal = Path.Combine(UtilArchivos.ContentTemporales, pDocLink);
+                    if (fichero.Exists && !fichero.FullName.Contains(pDocLink))
+                    {
+                        mGestorArchivos.MoverArchivo(pDocLink, rutaTemporal);
+                    }
+                }
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _loggingService.GuardarLogError(ex, $"Error al mover el documento link {pDocLink} del recurso modificado '{pDocumentoID}'");
+                return StatusCode(500);
             }
         }
 

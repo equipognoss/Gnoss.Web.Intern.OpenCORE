@@ -1,6 +1,24 @@
-﻿using Es.Riam.Gnoss.FileManager;
+﻿using Amazon.S3;
+using Amazon.S3.Model;
+using Amazon.S3.Util;
+using Es.Riam.AbstractsOpen;
+using Es.Riam.Gnoss.AD.EntityModel;
+using Es.Riam.Gnoss.AD.EntityModelBASE;
+using Es.Riam.Gnoss.AD.Facetado;
+using Es.Riam.Gnoss.AD.Facetado.Model;
+using Es.Riam.Gnoss.AD.Virtuoso;
+using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ServiciosGenerales;
+using Es.Riam.Gnoss.Elementos.Documentacion;
+using Es.Riam.Gnoss.Elementos.ParametroAplicacion;
+using Es.Riam.Gnoss.FileManager;
+using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
+using Es.Riam.Gnoss.UtilServiciosWeb;
+using Es.Riam.Gnoss.Web.Controles.Documentacion;
+using Es.Riam.Gnoss.Web.Controles.ParametroAplicacionGBD;
+using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
 using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper.Model;
 using Es.Riam.Gnoss.Web.MVC.Models.AdministrarEstilos;
 using Es.Riam.InterfacesOpenArchivos;
@@ -10,13 +28,17 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml;
+using System.Xml.Linq;
 using System.Xml.Serialization;
 
 namespace Gnoss.Web.Intern.Controllers
@@ -56,20 +78,28 @@ namespace Gnoss.Web.Intern.Controllers
 
         private IHttpContextAccessor mHttpContextAccessor;
         private ConfigService _configService;
+        private EntityContext _entityContext;
+        private IServicesUtilVirtuosoAndReplication _servicesUtilVirtuosoAndReplication;
+        private VirtuosoAD _virtuosoAD;
         private FileOperationsService _fileOperationsService;
         private IUtilArchivos _utilArchivos;
-
+        private ILogger mlogger;
+        private ILoggerFactory mLoggerFactory;
         #endregion
 
         #region Constructor
 
-        public ImagenesController(LoggingService loggingService, IHostingEnvironment env, IHttpContextAccessor httpContextAccessor, ConfigService configService, IUtilArchivos utilArchivos)
+        public ImagenesController(LoggingService loggingService, IHostingEnvironment env, IHttpContextAccessor httpContextAccessor, ConfigService configService, IUtilArchivos utilArchivos, EntityContext entityContext, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, VirtuosoAD virtuosoAD, ILogger<ImagenesController> logger, ILoggerFactory loggerFactory)
         {
             mHttpContextAccessor = httpContextAccessor;
             mEnv = env;
             mLoggingService = loggingService;
             _configService = configService;
-
+            _entityContext = entityContext;
+            _virtuosoAD = virtuosoAD;
+            _servicesUtilVirtuosoAndReplication = servicesUtilVirtuosoAndReplication;
+            mlogger = logger;
+            mLoggerFactory = loggerFactory;
             mRutaImagenes = configService.GetRutaImagenes();
             if (string.IsNullOrEmpty(mRutaImagenes))
             {
@@ -97,8 +127,8 @@ namespace Gnoss.Web.Intern.Controllers
                 mAzureStorageConnectionString = "";
             }
             _utilArchivos = utilArchivos;
-            mGestorArchivos = new GestionArchivos(loggingService, utilArchivos, pRutaArchivos: mRutaImagenes, pAzureStorageConnectionString: mAzureStorageConnectionString);
-            mGestorArchivosOntologias = new GestionArchivos(loggingService, utilArchivos, pRutaArchivos: mRutaOntologias, pAzureStorageConnectionString: mAzureStorageConnectionStringOntologias);
+            mGestorArchivos = new GestionArchivos(loggingService, utilArchivos, mLoggerFactory.CreateLogger<GestionArchivos>(), mLoggerFactory, pRutaArchivos: mRutaImagenes, pAzureStorageConnectionString: mAzureStorageConnectionString);
+            mGestorArchivosOntologias = new GestionArchivos(loggingService, utilArchivos, mLoggerFactory.CreateLogger<GestionArchivos>(), mLoggerFactory, pRutaArchivos: mRutaOntologias, pAzureStorageConnectionString: mAzureStorageConnectionStringOntologias);
         }
 
         #endregion
@@ -764,9 +794,221 @@ namespace Gnoss.Web.Intern.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("get-image-extension")]
+        public IActionResult ObtenerExtensionImagen(string pRutaImagen, string pNombreImagen)
+        {
+            try
+            {
+                string rutaCompletaSinExtension = Path.Combine(pRutaImagen, pNombreImagen);
+                List<string> formatosPermitidos = new List<string>() { ".png", ".jpg" };
+
+                foreach (string extension in formatosPermitidos)
+                {
+                    string rutaCompleta = $"{rutaCompletaSinExtension}{extension}";
+
+                    if (System.IO.File.Exists(rutaCompleta))
+                    {
+                        return Ok(extension);
+                    }
+                }
+
+                return Ok("");
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, $"Error al obtener la extension de la imagen. Parametros: pRutaImagen -> {pRutaImagen} ##### pNombreImagen -> {pNombreImagen}");
+                return StatusCode(500);
+            }
+        }
 
         [HttpPost]
-        [Route("remove-image-from-resource")]
+        [Route("remove-category-images")]
+        public IActionResult BorrarImagenesCategoria(Guid pCategoriaId, Guid pProyectoID)
+        {
+            try
+            {
+                string rutaImagenesCategoria = $"{UtilArchivos.ContentImagenesCategorias}/{pProyectoID.ToString().ToLower()}/{pCategoriaId.ToString().ToLower()}";
+
+                if (!pCategoriaId.Equals(Guid.Empty) && !pProyectoID.Equals(Guid.Empty))
+                {
+                    mGestorArchivos.EliminarDirectorio(rutaImagenesCategoria);
+                    return Ok();
+                }
+                else
+                {
+                    mLoggingService.GuardarLogError($"Error, el proyecto {pProyectoID} o la categoría {pCategoriaId} no son válidos");
+                    return StatusCode(500);
+                }
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, $"Error al eliminar las imagenes de la categoría {pCategoriaId} del proyecto {pProyectoID}");
+                return StatusCode(500);
+            }
+        }
+
+        [HttpPost]
+        [Route("move-images-deleted-resource")]
+        public async Task<IActionResult> MoverImagenesRecursoEliminadoOtroAlmacenamiento(string relative_path, Guid pDocumentoID, string pNombre)
+        {
+            string rutaTemporal = "";
+
+            try
+            {              
+                if (Directory.Exists(relative_path))
+                {
+                    rutaTemporal = Path.Combine(GestionArchivos.ObtenerRutaFicherosDeRecursosTemporal(pDocumentoID), pNombre);
+                    mGestorArchivos.MoverContenidoDirectorio(relative_path, rutaTemporal);
+
+                    return Ok();
+                }
+                else
+                {
+                    mLoggingService.GuardarLogError($"El directorio {relative_path} no existe.");
+                    return new EmptyResult();
+                }
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, $"Error al mover las imagenes del directorio '{relative_path}' a la ruta temporal '{rutaTemporal}'");
+                return StatusCode(500);
+            }
+        }
+
+        [HttpPost]
+        [Route("move-images-docs-videos-modified-resource")]
+        public async Task<IActionResult> MoverImagenesRecursoModificadoOtroAlmacenamiento(Guid pDocumentoID)
+        {
+            try
+            {
+                string rutaTemporal = GestionArchivos.ObtenerRutaFicherosDeRecursosTemporal(pDocumentoID);
+                if (!Directory.Exists(rutaTemporal))
+                {
+                    Directory.CreateDirectory(rutaTemporal);
+                }
+                List<string> ficherosRecurso = ObtenerFicherosRecurso(pDocumentoID);
+                List<string> ficherosAEliminar = ObtenerFicherosAEliminarDeRecurso(pDocumentoID, ficherosRecurso);
+                foreach (string file in ficherosAEliminar)
+                {
+                    string nombreFichero = file.Substring(file.LastIndexOf(Path.DirectorySeparatorChar) + 1);
+                    string ficheroTemp = Path.Combine(rutaTemporal, nombreFichero);
+                    mGestorArchivos.MoverArchivo(file, ficheroTemp, true);
+                }
+
+                List<string> directoriosOpenSeaDragonEliminar = ObtenerDirectoriosOpenSeaDragonAEliminarDeRecursoModificado(pDocumentoID, ficherosRecurso);
+                foreach (string carpeta in directoriosOpenSeaDragonEliminar)
+                {
+                    string carpetaTemp = Path.Combine(rutaTemporal, carpeta);
+                    mGestorArchivos.MoverContenidoDirectorio(carpeta, carpetaTemp);
+                }
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, $"Error al mover las imagenes del recurso modificado '{pDocumentoID}'");
+                return StatusCode(500);
+            }
+        }
+
+        private List<string> ObtenerFicherosAEliminarDeRecurso(Guid pDocumentoID, List<string> pFicherosValidos)
+        {
+            List<string> ficherosRecursoEnServidor =
+            [
+                //Todas las imagenes, miniaturas, recortes.
+                .. mGestorArchivos.ObtenerFicherosDeDirectorioRecurso(Path.Combine(UtilArchivos.ContentImagenes, UtilArchivos.ContentImagenesDocumentos, UtilArchivos.ContentImagenesSemanticas, UtilArchivos.DirectorioDocumento(pDocumentoID))),
+                //Todos los archivos link
+                .. mGestorArchivos.ObtenerFicherosDeDirectorioRecurso(Path.Combine(UtilArchivos.ContentDocLinks, UtilArchivos.DirectorioDocumento(pDocumentoID))),
+                // Todos los videos
+                .. mGestorArchivos.ObtenerFicherosDeDirectorioRecurso(Path.Combine(UtilArchivos.ContentVideosSemanticos, UtilArchivos.DirectorioDocumento(pDocumentoID))),
+            ];
+
+            List<string> ficherosEliminar = new List<string>();
+            foreach (string file in ficherosRecursoEnServidor)
+            {
+                if (!mGestorArchivos.EsFicheroValido(file, pFicherosValidos))
+                {
+                    ficherosEliminar.Add(file);
+                }
+            }
+
+            return ficherosEliminar;
+        }
+
+        private List<string> ObtenerDirectoriosOpenSeaDragonAEliminarDeRecursoModificado(Guid pDocumentoID, List<string> pFicherosValidos)
+        {
+            List<string> directoriosEnServidorDeRecurso = mGestorArchivos.ObtenerDirectoriosDeDirectorio(Path.Combine(UtilArchivos.ContentImagenesSemanticas, UtilArchivos.DirectorioDocumento(pDocumentoID)));
+
+            List<string> foldersToDelete = new List<string>();
+            foreach (string folder in directoriosEnServidorDeRecurso)
+            {
+                if (!mGestorArchivos.EsOpenSeaDragonValido(folder, pFicherosValidos))
+                {
+                    foldersToDelete.Add(folder);
+                }
+            }
+            return foldersToDelete;
+        }
+
+        private List<string> ObtenerFicherosRecurso(Guid pDocumentoID)
+        {
+            string urlIntragnoss = _entityContext.ParametroAplicacion.Where(parametro => parametro.Parametro.Equals("UrlIntragnoss")).Select(item => item.Valor).FirstOrDefault();
+            DocumentacionCN documentacionCN = new DocumentacionCN(_entityContext, mLoggingService, _configService, _servicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+            Guid proyectoID = documentacionCN.ObtenerProyectoIDPorDocumentoID(pDocumentoID);
+            FacetadoAD facetadoAD = new FacetadoAD(urlIntragnoss, mLoggingService, _entityContext, _configService, _virtuosoAD, _servicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoAD>(), mLoggerFactory);
+            List<string> listaFicheros = new List<string>();
+
+            string consulta = $"{facetadoAD.NamespacesVirtuosoLectura} SELECT ?o WHERE {{ ?s ?p ?o. ?documento <http://gnoss/hasEntidad> ?s. FILTER (?documento = <{urlIntragnoss}{pDocumentoID.ToString().ToLower()}>) }}";
+            FacetadoDS facetadoDS = new FacetadoDS();
+
+            facetadoAD.LeerDeVirtuoso(consulta, "Archivos", facetadoDS, proyectoID.ToString());
+
+            if (facetadoDS.Tables["Archivos"] != null)
+            {
+                foreach (DataRow fichero in facetadoDS.Tables["Archivos"].Rows)
+                {
+                    string triple = fichero[0].ToString();
+                    if (triple.Contains(UtilArchivos.ContentImagenesSemanticas) || triple.Contains(UtilArchivos.ContentDocLinks) || triple.Contains(UtilArchivos.ContentDocumentosSem) || triple.Contains(UtilArchivos.ContentVideosSemanticos))
+                    {
+                        listaFicheros.Add(triple);
+                    }
+                }
+            }
+
+            return listaFicheros;
+        }
+
+        [HttpPost]
+        [Route("move-image-modified-resource")]
+        public async Task<IActionResult> MoverImagenRecursoModificadoOtroAlmacenamiento(string pImagen, Guid pDocumentoID)
+        {
+            try
+            {
+                string rutaDocumento = Path.Combine(mRutaImagenes, UtilArchivos.ContentImagenesDocumentos, UtilArchivos.ContentImagenesSemanticas, UtilArchivos.DirectorioDocumento(pDocumentoID));
+
+                DirectoryInfo dirInfoRaiz = new DirectoryInfo(rutaDocumento);
+                FileInfo[] ficheros = dirInfoRaiz.GetFiles();
+                foreach (FileInfo fichero in ficheros)
+                {
+                    string rutaTemporal = Path.Combine(UtilArchivos.ContentTemporales, pImagen);
+                    if (fichero.Exists && !fichero.FullName.Contains(pImagen))
+                    {
+                        mGestorArchivos.MoverArchivo(pImagen, rutaTemporal);
+                    }
+                }
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, $"Error al mover la imagen {pImagen} del recurso modificado '{pDocumentoID}'");
+                return StatusCode(500);
+            }
+        }
+
+        [HttpPost]
+        [Route("remove-images-from-resource")]
         public IActionResult BorrarImagenesDeRecurso(string relative_path)
         {
             try
@@ -779,7 +1021,7 @@ namespace Gnoss.Web.Intern.Controllers
                 }
                 else
                 {
-                    mLoggingService.GuardarLogError($"El directorio {relative_path} no existe. ");
+                    mLoggingService.GuardarLogError($"El directorio {relative_path} no existe.");
                     return new EmptyResult();
                 }
             }
@@ -804,7 +1046,6 @@ namespace Gnoss.Web.Intern.Controllers
             {
                 if (!string.IsNullOrEmpty(relative_path))
                 {
-
                     if (mGestorArchivos.ComprobarExisteDirectorio(relative_path).Result)
                     {
                         return Ok(mGestorArchivos.ObtenerFicherosDeDirectorio(relative_path, image_name).Result.ToList());
@@ -830,7 +1071,6 @@ namespace Gnoss.Web.Intern.Controllers
         /// Devuelve la información relevante sobre los ficheros del directorio indicado
         /// </summary>
         /// <param name="relative_path">Nombre de la imagen usado para filtrar</param>
-        /// <param name="image_name">Filtro utilizado para buscar uno o más ficheros en el directorio</param>
         /// <returns>Lista de cadenas con los nombres de las imágenes que contienen el nombre pasado.</returns>
         [HttpGet]
         [Route("get-files-data-from-directory")]
@@ -906,6 +1146,32 @@ namespace Gnoss.Web.Intern.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("move-image-to-temp")]
+        public IActionResult MoverImagenAlmacenamientoTemporal(string pRuta, Guid pDocumentoID)
+        {
+            try
+            {
+                FileInfo file = new FileInfo(pRuta);
+                if (file.Exists)
+                {
+                    string rutaTemporal = GestionArchivos.ObtenerRutaFicherosDeRecursosTemporal(pDocumentoID);
+                    if (!Directory.Exists(rutaTemporal))
+                    {
+                        Directory.CreateDirectory(rutaTemporal);
+                    }
+                    rutaTemporal = Path.Combine(rutaTemporal, file.Name);
+                    mGestorArchivos.MoverArchivo(pRuta, rutaTemporal, true);
+                }
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, $"Error al mover la imagen '{pRuta}' del documento '{pDocumentoID}' al almacenamiento temporal");
+                return StatusCode(500);
+            }
+        }
 
         [HttpDelete]
         [Route("remove-image-from-personal-document")]
@@ -1021,6 +1287,7 @@ namespace Gnoss.Web.Intern.Controllers
                 return StatusCode(500);
             }
         }
+
         /// <summary>
         /// Obtiene la imágen de un documento de tipo imágen.
         /// </summary>
@@ -1055,7 +1322,8 @@ namespace Gnoss.Web.Intern.Controllers
         /// <summary>
         /// Devuelve el espacio que ocupa una imagen.
         /// </summary>
-        /// <param name="pRuta">ruta de la imagen</param>
+        /// <param name="pRuta">Ruta del fichero a comprobar sin el nombre</param>
+        /// <param name="pNombreFichero">Nombre del fichero a comprobar</param>
         /// <returns>Espacio que ocupa una imagen</returns>
         [NonAction]
         private double ObtenerEspacionFichero(string pRuta, string pNombreFichero)
@@ -1068,12 +1336,15 @@ namespace Gnoss.Web.Intern.Controllers
 
             return espacioMB;
         }
+
         [NonAction]
         private void EscribirImagen(GnossImage pImagen, bool pImagenDeOntologia = false)
         {
             try
             {
-                if (pImagen.extension.ToLower().Equals(".png") || pImagen.extension.ToLower().Equals(".jpg") || pImagen.extension.ToLower().Equals(".jpeg") || pImagen.extension.ToLower().Equals(".gif"))
+                string extension = pImagen.extension.ToLower();
+
+                if (extension == ".png" || extension == ".jpg" || extension == ".jpeg" || extension == ".gif" || extension == ".webp")
                 {
                     if (pImagenDeOntologia)
                     {
@@ -1086,7 +1357,7 @@ namespace Gnoss.Web.Intern.Controllers
                 }
                 else
                 {
-                    throw new Exception($"Los formatos permitidos son png, jpg, jpeg y gif. La extensión recibida es {pImagen.extension}. Archivo {pImagen.name} y directorio {pImagen.relative_path}");
+                    throw new BadImageFormatException($"Los formatos permitidos son png, jpg, jpeg, gif y webp. La extensión recibida es {pImagen.extension}. Archivo {pImagen.name} y directorio {pImagen.relative_path}");
                 }
             }
             catch (Exception ex)
@@ -1095,6 +1366,7 @@ namespace Gnoss.Web.Intern.Controllers
                 throw;
             }
         }
+
         /// <summary>
         /// Crea una copia de seguridad de los archivos iniciales.
         /// </summary>
@@ -1138,7 +1410,6 @@ namespace Gnoss.Web.Intern.Controllers
                     // Hay azure, copiamos los archivos en otra carpeta: 
                     mGestorArchivos.CopiarArchivosDeDirectorio(pRutaRaizHistorial, rutaVersionInicial, true);
                 }
-
             }
         }
 
@@ -1155,6 +1426,7 @@ namespace Gnoss.Web.Intern.Controllers
                 throw;
             }
         }
+
         [NonAction]
         private string ToBase64(byte[] pBytes)
         {
