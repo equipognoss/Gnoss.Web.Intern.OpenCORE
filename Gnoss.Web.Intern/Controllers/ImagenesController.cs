@@ -650,6 +650,7 @@ namespace Gnoss.Web.Intern.Controllers
         {
             try
             {
+                mLoggingService.AgregarEntrada($"Entra al método AgregarImagenADirectorio la imagen: \n\t - Nombre: {pImagen.name} \n\t - Ruta: {pImagen.relative_path}");
                 string[] directorioYNombre = mGestorArchivos.ObtenerDirectorioYArchivoDeNombreArchivo(pImagen.name);
 
                 if (!string.IsNullOrEmpty(directorioYNombre[0]))
@@ -1343,6 +1344,8 @@ namespace Gnoss.Web.Intern.Controllers
             try
             {
                 string extension = pImagen.extension.ToLower();
+
+                mLoggingService.AgregarEntrada($"Entra en ImagenesController.EscribirImagen con la imagen: \n\t -Nombre: {pImagen.name} \n\t -Ruta: {pImagen.relative_path} \n\t -Extensión: {extension}");
 
                 if (extension == ".png" || extension == ".jpg" || extension == ".jpeg" || extension == ".gif" || extension == ".webp")
                 {
