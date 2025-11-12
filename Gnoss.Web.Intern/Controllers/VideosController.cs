@@ -1,4 +1,5 @@
-﻿using Es.Riam.Gnoss.CL.ServiciosGenerales;
+﻿using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.FileManager;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
@@ -22,7 +23,7 @@ namespace Gnoss.Web.Intern.Controllers
     [ApiController]
     [Route("[controller]")]
     [Authorize]
-    public class VideosController : ControllerBase
+    public class VideosController : ControllerBaseIntern
     {
         #region Miembros
 
@@ -38,21 +39,15 @@ namespace Gnoss.Web.Intern.Controllers
         /// Almacena la cadena de conexión de Azure.
         /// </summary>
         public static string mAzureStorageConnectionString;
-        private LoggingService mLoggingService;
         private Conexion mConexion;
         private GestionArchivos mGestorArchivos;
-        private ConfigService mConfigService;
-        private ILogger mlogger;
-        private ILoggerFactory mLoggerFactory;
+        private ILogger mLogger;
         #endregion
 
-        public VideosController(LoggingService loggingService, Conexion conexion, IHostingEnvironment env, IUtilArchivos utilArchivos, ConfigService configService, ILogger<VideosController> logger, ILoggerFactory loggerFactory)
+        public VideosController(LoggingService loggingService, Conexion conexion, IHostingEnvironment env, IUtilArchivos utilArchivos, ConfigService configService, RedisCacheWrapper redisCacheWrapper, ILoggerFactory loggerFactory) : base(loggingService, redisCacheWrapper, configService, loggerFactory)
         {
-            mLoggingService = loggingService;
             mConexion = conexion;
-            mConfigService = configService;
-            mlogger = logger;
-            mLoggerFactory = loggerFactory;
+            mLogger = loggerFactory.CreateLogger<VideosController>();
             mRutaVideos = configService.GetRutaVideos();
             if (string.IsNullOrEmpty(mRutaVideos))
             {
@@ -97,9 +92,9 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al agregar el vídeo {pDocumentoID}{pExtension}");
+                mLoggingService.GuardarLogError(ex, $"Error al agregar el vídeo {pDocumentoID}{pExtension}", base.mLogger);
                 return StatusCode(500);
-            }            
+            }
         }
 
         /// <summary>
@@ -128,7 +123,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al agregar el vídeo al espacio personal. Datos petición: Fichero -> {pDocumentoID}{pExtension} ||| pPersonaID -> {pPersonaID} ||| pFichero tiene valor? -> {pFichero != null}");
+                mLoggingService.GuardarLogError(ex, $"Error al agregar el vídeo al espacio personal. Datos petición: Fichero -> {pDocumentoID}{pExtension} ||| pPersonaID -> {pPersonaID} ||| pFichero tiene valor? -> {pFichero != null}", base.mLogger);
                 return 0;
             }
         }
@@ -159,7 +154,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al agregar el vídeo de organización. Datos petición: Fichero -> {pDocumentoID}{pExtension} ||| pOrganizacion -> {pOrganizacionID} ||| pFichero tiene valor? -> {pFichero != null}");
+                mLoggingService.GuardarLogError(ex, $"Error al agregar el vídeo de organización. Datos petición: Fichero -> {pDocumentoID}{pExtension} ||| pOrganizacion -> {pOrganizacionID} ||| pFichero tiene valor? -> {pFichero != null}", base.mLogger);
                 return 0;
             }
         }
@@ -190,7 +185,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al agregar el vídeo semántico. Datos petición: Fichero -> {pDocumentoID}{pExtension} ||| pVideoID -> {pVideoID} ||| pFichero tiene valor? -> {pFichero != null}");
+                mLoggingService.GuardarLogError(ex, $"Error al agregar el vídeo semántico. Datos petición: Fichero -> {pDocumentoID}{pExtension} ||| pVideoID -> {pVideoID} ||| pFichero tiene valor? -> {pFichero != null}", base.mLogger);
                 return 0;
             }
         }
@@ -211,7 +206,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al obtener el vídeo {pDocumentoID} de la persona {pPersonaID}");
+                mLoggingService.GuardarLogError(ex, $"Error al obtener el vídeo {pDocumentoID} de la persona {pPersonaID}", mLogger);
                 return StatusCode(500);
             }
         }
@@ -236,7 +231,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al eliminar los videos de la ruta: '{pRuta}'");
+                mLoggingService.GuardarLogError(ex, $"Error al eliminar los videos de la ruta: '{pRuta}'", mLogger);
                 return 0;
             }
         }
@@ -256,13 +251,13 @@ namespace Gnoss.Web.Intern.Controllers
                 }
                 else
                 {
-                    mLoggingService.GuardarLog($"El directorio {relative_path} no existe.");
+                    mLoggingService.GuardarLog($"El directorio {relative_path} no existe.",mLogger);
                     return new EmptyResult();
                 }
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al mover los videos del directorio '{relative_path}'");
+                mLoggingService.GuardarLogError(ex, $"Error al mover los videos del directorio '{relative_path}'",mLogger);
                 return StatusCode(500);
             }
         }
@@ -290,7 +285,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al mover el video {pVideo} del recurso modificado '{pDocumentoID}'");
+                mLoggingService.GuardarLogError(ex, $"Error al mover el video {pVideo} del recurso modificado '{pDocumentoID}'", mLogger);
                 return StatusCode(500);
             }
         }
@@ -311,7 +306,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al obtener el espacio del vídeo {pDocumentoID} de la organización {pOrganizacionID}");
+                mLoggingService.GuardarLogError(ex, $"Error al obtener el espacio del vídeo {pDocumentoID} de la organización {pOrganizacionID}", mLogger);
                 return StatusCode(500);
             }
         }
@@ -330,9 +325,9 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al borrar el vídeo del documento {pDocumentoID}");
+                mLoggingService.GuardarLogError(ex, $"Error al borrar el vídeo del documento {pDocumentoID}", mLogger);
                 return StatusCode(500);
-            }       
+            }
         }
 
         /// <summary>
@@ -350,9 +345,9 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al borrar el vídeo {pDocumentoID} de la persona {pPersonaID}");
+                mLoggingService.GuardarLogError(ex, $"Error al borrar el vídeo {pDocumentoID} de la persona {pPersonaID}", mLogger);
                 return false;
-            }            
+            }
         }
 
         /// <summary>
@@ -370,9 +365,9 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al borrar el vídeo {pDocumentoID} de la organización {pOrganizacionID}");
+                mLoggingService.GuardarLogError(ex, $"Error al borrar el vídeo {pDocumentoID} de la organización {pOrganizacionID}", mLogger);
                 return false;
-            }            
+            }
         }
 
         /// <summary>
@@ -388,11 +383,11 @@ namespace Gnoss.Web.Intern.Controllers
             {
                 return BorrarVideo(pVideoID, pDocumentoID, 2);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al borrar el vídeo semántico {pVideoID} del documento {pDocumentoID}");
+                mLoggingService.GuardarLogError(ex, $"Error al borrar el vídeo semántico {pVideoID} del documento {pDocumentoID}", mLogger);
                 return false;
-            }            
+            }
         }
 
         /// <summary>
@@ -406,36 +401,36 @@ namespace Gnoss.Web.Intern.Controllers
         /// <param name="pOrganizacionIDDestino">Identificador de la organización en la que se va a copiar el vídeo</param>
         [HttpPost]
         [Route("CopiarVideo")]
-        public IActionResult CopiarVideo(Guid pDocumentoID, Guid pDocumentoIDCopia, Guid pPersonaID, Guid pOrganizacionID, Guid pPersonaIDDestino, Guid pOrganizacionIDDestino)
+        public IActionResult CopiarVideo(Guid pDocumentoID, Guid pDocumentoIDCopia, Guid pPersonaID, Guid pOrganizacionID, Guid pPersonaIDDestino, Guid pOrganizacionIDDestino, string pExtension)
         {
             string rutaVideo = "";
             string rutaCopiaVideo = "";
             try
-            {                
+            {
                 if (pPersonaID != Guid.Empty)
                 {
-                    rutaVideo = Path.Combine(mRutaVideos, "VideosPersonales",  pPersonaID.ToString(), $"{pDocumentoID}.flv");
+                    rutaVideo = Path.Combine(mRutaVideos, "VideosPersonales",  pPersonaID.ToString(), $"{pDocumentoID}{pExtension}");
                 }
                 else if (pOrganizacionID != Guid.Empty)
                 {
-                    rutaVideo = Path.Combine(mRutaVideos, "VideosOrganizaciones",  pOrganizacionID.ToString(), $"{pDocumentoID}.flv");
+                    rutaVideo = Path.Combine(mRutaVideos, "VideosOrganizaciones",  pOrganizacionID.ToString(), $"{pDocumentoID}{pExtension}");
                 }
                 else
                 {
-                    rutaVideo = Path.Combine(mRutaVideos, $"{pDocumentoID}.flv");
+                    rutaVideo = Path.Combine(mRutaVideos, $"{pDocumentoID}{pExtension}");
                 }
 
                 if (pPersonaIDDestino != Guid.Empty)
                 {
-                    rutaCopiaVideo = Path.Combine(mRutaVideos, "VideosPersonales",  pPersonaIDDestino.ToString(), $"{pDocumentoIDCopia}.flv");
+                    rutaCopiaVideo = Path.Combine(mRutaVideos, "VideosPersonales",  pPersonaIDDestino.ToString(), $"{pDocumentoIDCopia}{pExtension}");
                 }
                 else if (pOrganizacionIDDestino != Guid.Empty)
                 {
-                    rutaCopiaVideo = Path.Combine(mRutaVideos, "VideosOrganizaciones",  pOrganizacionIDDestino.ToString(), $"{pDocumentoIDCopia}.flv");
+                    rutaCopiaVideo = Path.Combine(mRutaVideos, "VideosOrganizaciones",  pOrganizacionIDDestino.ToString(), $"{pDocumentoIDCopia}{pExtension}");
                 }
                 else
                 {
-                    rutaCopiaVideo = Path.Combine(mRutaVideos, $"{pDocumentoIDCopia}.flv");
+                    rutaCopiaVideo = Path.Combine(mRutaVideos, $"{pDocumentoIDCopia}{pExtension}");
                 }
 
                 FileInfo fich = new FileInfo(rutaVideo);
@@ -445,7 +440,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Ha habido un error al copiar el vídeo {pDocumentoID} al DocumentoCopia {pDocumentoIDCopia}. Persona -> {pPersonaID} ||| PersonaDestino -> {pPersonaIDDestino} ||| Organización -> {pOrganizacionID} ||| OrganizaciónDestino -> {pOrganizacionIDDestino} ||| RutaVideo: {rutaVideo} ||| RutaVideoCopia -> {rutaCopiaVideo}");
+                mLoggingService.GuardarLogError(ex, $"Ha habido un error al copiar el vídeo {pDocumentoID} al DocumentoCopia {pDocumentoIDCopia}. Persona -> {pPersonaID} ||| PersonaDestino -> {pPersonaIDDestino} ||| Organización -> {pOrganizacionID} ||| OrganizaciónDestino -> {pOrganizacionIDDestino} ||| RutaVideo: {rutaVideo} ||| RutaVideoCopia -> {rutaCopiaVideo}", mLogger);
                 return StatusCode(500);
             }
         }
@@ -465,7 +460,7 @@ namespace Gnoss.Web.Intern.Controllers
                 string rutaVideo = Path.Combine(mRutaVideos, "VideosSemanticos", UtilArchivos.DirectorioDocumento(pDocumentoID), $"{pVideoID}.flv");
                 string rutaCopiaVideo = Path.Combine(mRutaVideos, "VideosSemanticos", UtilArchivos.DirectorioDocumento(pDocumentoID), $"{pVideoID}.flv");
                 DirectoryInfo directorioCopia = new DirectoryInfo(Path.Combine(mRutaVideos, "VideosSemanticos", UtilArchivos.DirectorioDocumento(pDocumentoID)));
-                
+
                 if (!directorioCopia.Exists)
                 {
                     directorioCopia.Create();
@@ -478,7 +473,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Ha habido un error al copiar el vídeo semántico {pVideoID} del Documento {pDocumentoID} al documento {pDocumentoIDCopia}.");
+                mLoggingService.GuardarLogError(ex, $"Ha habido un error al copiar el vídeo semántico {pVideoID} del Documento {pDocumentoID} al documento {pDocumentoIDCopia}.", mLogger);
                 return StatusCode(500);
             }
         }
@@ -580,7 +575,7 @@ namespace Gnoss.Web.Intern.Controllers
             try
             {
                 FileInfo video = new FileInfo(pRuta);
-                
+
                 if (video.Exists)
                 {
                     tamanoVideo = ((double)video.Length) / 1024 / 1024;
@@ -590,9 +585,9 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Ha habido un error al obtener el peso del fichero de la ruta: {pRuta}");
+                mLoggingService.GuardarLogError(ex, $"Ha habido un error al obtener el peso del fichero de la ruta: {pRuta}", mLogger);
                 return tamanoVideo;
-            }          
+            }
         }
 
         /// <summary>
@@ -607,7 +602,7 @@ namespace Gnoss.Web.Intern.Controllers
         {
             string rutaVideo = "";
             try
-            {               
+            {
                 if (pCarpetaID == Guid.Empty)
                 {
                     rutaVideo = Path.Combine(mRutaVideos, $"{pDocumentoID}.flv");
@@ -633,7 +628,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Ha habido un error al borrar el vídeo de la ruta: {rutaVideo}");
+                mLoggingService.GuardarLogError(ex, $"Ha habido un error al borrar el vídeo de la ruta: {rutaVideo}", mLogger);
                 return false;
             }
         }

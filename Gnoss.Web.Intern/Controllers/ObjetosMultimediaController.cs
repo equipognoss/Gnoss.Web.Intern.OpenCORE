@@ -1,4 +1,5 @@
-﻿using Es.Riam.Gnoss.CL.ServiciosGenerales;
+﻿using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.FileManager;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
@@ -24,7 +25,7 @@ namespace Gnoss.Web.Intern.Controllers
     [Route("[controller]")]
     [ApiController]
     [Authorize]
-    public class ObjetosMultimediaController : ControllerBase
+    public class ObjetosMultimediaController : ControllerBaseIntern
     {
         #region Miembros
 
@@ -47,24 +48,18 @@ namespace Gnoss.Web.Intern.Controllers
         private static string mAzureStorageConnectionStringOntologias = "";
 
         private GestionArchivos mGestorArchivos;
-        private LoggingService _loggingService;
         private IHttpContextAccessor _httpContextAccessor;
 
         private IHostingEnvironment _env;
-        private ConfigService _configService;
         private FileOperationsService _fileOperationsService;
         private IUtilArchivos _utilArchivos;
-        private ILogger mlogger;
-        private ILoggerFactory mLoggerFactory;
+        private new readonly ILogger mLogger;
         #endregion
-        public ObjetosMultimediaController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IHostingEnvironment env, ConfigService configService, IUtilArchivos utilArchivos, ILogger<ObjetosMultimediaController> logger, ILoggerFactory loggerFactory)
+        public ObjetosMultimediaController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IHostingEnvironment env, ConfigService configService, IUtilArchivos utilArchivos,RedisCacheWrapper redisCacheWrapper, ILoggerFactory loggerFactory):base(loggingService,redisCacheWrapper,configService, loggerFactory)
         {
-            _loggingService = loggingService;
             _httpContextAccessor = httpContextAccessor;
             _env = env;
-            _configService = configService;
-            mlogger = logger;
-            mLoggerFactory = loggerFactory;
+            mLogger = loggerFactory.CreateLogger<ObjetosMultimediaController>();
             mRutaImagenes = configService.GetRutaImagenes();
             if (string.IsNullOrEmpty(mRutaImagenes))
             {
@@ -81,7 +76,7 @@ namespace Gnoss.Web.Intern.Controllers
             mRutaZipExe = Path.Combine(env.ContentRootPath, "zip");
 
 
-            mAzureStorageConnectionString = _configService.ObtenerAzureStorageConnectionString();
+            mAzureStorageConnectionString = mConfigService.ObtenerAzureStorageConnectionString();
             if (!string.IsNullOrEmpty(mAzureStorageConnectionString))
             {
                 mAzureStorageConnectionStringOntologias = mAzureStorageConnectionString + "/" + UtilArchivos.ContentOntologias;
@@ -92,8 +87,8 @@ namespace Gnoss.Web.Intern.Controllers
                 mAzureStorageConnectionString = "";
             }
             _utilArchivos = utilArchivos;
-            mGestorArchivos = new GestionArchivos(_loggingService, utilArchivos, mLoggerFactory.CreateLogger<GestionArchivos>(), mLoggerFactory, pRutaArchivos: mRutaImagenes, pAzureStorageConnectionString: mAzureStorageConnectionString);
-            _fileOperationsService = new FileOperationsService(_loggingService, _env);
+            mGestorArchivos = new GestionArchivos(mLoggingService, utilArchivos, mLoggerFactory.CreateLogger<GestionArchivos>(), mLoggerFactory, pRutaArchivos: mRutaImagenes, pAzureStorageConnectionString: mAzureStorageConnectionString);
+            _fileOperationsService = new FileOperationsService(mLoggingService, _env);
 
         }
         #region Metodos

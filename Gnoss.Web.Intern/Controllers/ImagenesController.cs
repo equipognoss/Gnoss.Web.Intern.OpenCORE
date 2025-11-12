@@ -50,7 +50,7 @@ namespace Gnoss.Web.Intern.Controllers
     [ApiController]
     [Route("image-service")]
     [Authorize]
-    public class ImagenesController : ControllerBase
+    public class ImagenesController : ControllerBaseIntern
     {
 
         #region Miembros
@@ -74,32 +74,25 @@ namespace Gnoss.Web.Intern.Controllers
 
         private IHostingEnvironment mEnv;
 
-        private LoggingService mLoggingService;
-
         private IHttpContextAccessor mHttpContextAccessor;
-        private ConfigService _configService;
         private EntityContext _entityContext;
         private IServicesUtilVirtuosoAndReplication _servicesUtilVirtuosoAndReplication;
         private VirtuosoAD _virtuosoAD;
         private FileOperationsService _fileOperationsService;
         private IUtilArchivos _utilArchivos;
-        private ILogger mlogger;
-        private ILoggerFactory mLoggerFactory;
+        private new readonly ILogger mLogger;
         #endregion
 
         #region Constructor
 
-        public ImagenesController(LoggingService loggingService, IHostingEnvironment env, IHttpContextAccessor httpContextAccessor, ConfigService configService, IUtilArchivos utilArchivos, EntityContext entityContext, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, VirtuosoAD virtuosoAD, ILogger<ImagenesController> logger, ILoggerFactory loggerFactory)
+        public ImagenesController(LoggingService loggingService, IHostingEnvironment env, IHttpContextAccessor httpContextAccessor, ConfigService configService, IUtilArchivos utilArchivos, EntityContext entityContext, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, VirtuosoAD virtuosoAD, RedisCacheWrapper redisCacheWrapper, ILoggerFactory loggerFactory):base(loggingService,redisCacheWrapper,configService,loggerFactory)
         {
             mHttpContextAccessor = httpContextAccessor;
             mEnv = env;
-            mLoggingService = loggingService;
-            _configService = configService;
             _entityContext = entityContext;
             _virtuosoAD = virtuosoAD;
             _servicesUtilVirtuosoAndReplication = servicesUtilVirtuosoAndReplication;
-            mlogger = logger;
-            mLoggerFactory = loggerFactory;
+            mLogger = loggerFactory.CreateLogger<ImagenesController>();
             mRutaImagenes = configService.GetRutaImagenes();
             if (string.IsNullOrEmpty(mRutaImagenes))
             {
@@ -115,7 +108,7 @@ namespace Gnoss.Web.Intern.Controllers
             //string rutaConfigs = Path.Combine(env.ContentRootPath, "config");
 
 
-            mAzureStorageConnectionString = _configService.ObtenerAzureStorageConnectionString();
+            mAzureStorageConnectionString = mConfigService.ObtenerAzureStorageConnectionString();
 
             if (!string.IsNullOrEmpty(mAzureStorageConnectionString))
             {
@@ -145,13 +138,12 @@ namespace Gnoss.Web.Intern.Controllers
                 string[] nombreYDirectorio = mGestorArchivos.ObtenerDirectorioYArchivoDeNombreArchivo(pImagen.name);
                 pImagen.relative_path = nombreYDirectorio[0];
                 pImagen.name = nombreYDirectorio[1];
-
-                EscribirImagen(pImagen);
-                return Ok();
+				EscribirImagen(pImagen);
+				return Ok();
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+				_fileOperationsService.GuardarLogError(ex);
                 return StatusCode(500);
             }
         }
@@ -818,7 +810,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al obtener la extension de la imagen. Parametros: pRutaImagen -> {pRutaImagen} ##### pNombreImagen -> {pNombreImagen}");
+                mLoggingService.GuardarLogError(ex, $"Error al obtener la extension de la imagen. Parametros: pRutaImagen -> {pRutaImagen} ##### pNombreImagen -> {pNombreImagen}", mLogger);
                 return StatusCode(500);
             }
         }
@@ -838,13 +830,13 @@ namespace Gnoss.Web.Intern.Controllers
                 }
                 else
                 {
-                    mLoggingService.GuardarLogError($"Error, el proyecto {pProyectoID} o la categoría {pCategoriaId} no son válidos");
+                    mLoggingService.GuardarLogError($"Error, el proyecto {pProyectoID} o la categoría {pCategoriaId} no son válidos", mLogger);
                     return StatusCode(500);
                 }
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al eliminar las imagenes de la categoría {pCategoriaId} del proyecto {pProyectoID}");
+                mLoggingService.GuardarLogError(ex, $"Error al eliminar las imagenes de la categoría {pCategoriaId} del proyecto {pProyectoID}", mLogger);
                 return StatusCode(500);
             }
         }
@@ -866,13 +858,13 @@ namespace Gnoss.Web.Intern.Controllers
                 }
                 else
                 {
-                    mLoggingService.GuardarLogError($"El directorio {relative_path} no existe.");
+                    mLoggingService.GuardarLogError($"El directorio {relative_path} no existe.", mLogger);
                     return new EmptyResult();
                 }
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al mover las imagenes del directorio '{relative_path}' a la ruta temporal '{rutaTemporal}'");
+                mLoggingService.GuardarLogError(ex, $"Error al mover las imagenes del directorio '{relative_path}' a la ruta temporal '{rutaTemporal}'", mLogger);
                 return StatusCode(500);
             }
         }
@@ -908,7 +900,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al mover las imagenes del recurso modificado '{pDocumentoID}'");
+                mLoggingService.GuardarLogError(ex, $"Error al mover las imagenes del recurso modificado '{pDocumentoID}'", mLogger);
                 return StatusCode(500);
             }
         }
@@ -955,9 +947,9 @@ namespace Gnoss.Web.Intern.Controllers
         private List<string> ObtenerFicherosRecurso(Guid pDocumentoID)
         {
             string urlIntragnoss = _entityContext.ParametroAplicacion.Where(parametro => parametro.Parametro.Equals("UrlIntragnoss")).Select(item => item.Valor).FirstOrDefault();
-            DocumentacionCN documentacionCN = new DocumentacionCN(_entityContext, mLoggingService, _configService, _servicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+            DocumentacionCN documentacionCN = new DocumentacionCN(_entityContext, mLoggingService, mConfigService, _servicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             Guid proyectoID = documentacionCN.ObtenerProyectoIDPorDocumentoID(pDocumentoID);
-            FacetadoAD facetadoAD = new FacetadoAD(urlIntragnoss, mLoggingService, _entityContext, _configService, _virtuosoAD, _servicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoAD>(), mLoggerFactory);
+            FacetadoAD facetadoAD = new FacetadoAD(urlIntragnoss, mLoggingService, _entityContext, mConfigService, _virtuosoAD, _servicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoAD>(), mLoggerFactory);
             List<string> listaFicheros = new List<string>();
 
             string consulta = $"{facetadoAD.NamespacesVirtuosoLectura} SELECT ?o WHERE {{ ?s ?p ?o. ?documento <http://gnoss/hasEntidad> ?s. FILTER (?documento = <{urlIntragnoss}{pDocumentoID.ToString().ToLower()}>) }}";
@@ -1003,7 +995,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al mover la imagen {pImagen} del recurso modificado '{pDocumentoID}'");
+                mLoggingService.GuardarLogError(ex, $"Error al mover la imagen {pImagen} del recurso modificado '{pDocumentoID}'", mLogger);
                 return StatusCode(500);
             }
         }
@@ -1022,7 +1014,7 @@ namespace Gnoss.Web.Intern.Controllers
                 }
                 else
                 {
-                    mLoggingService.GuardarLogError($"El directorio {relative_path} no existe.");
+                    mLoggingService.GuardarLogError($"El directorio {relative_path} no existe.", mLogger);
                     return new EmptyResult();
                 }
             }
@@ -1098,7 +1090,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex,mLogger);
                 return StatusCode(500);
             }
         }
@@ -1169,7 +1161,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al mover la imagen '{pRuta}' del documento '{pDocumentoID}' al almacenamiento temporal");
+                mLoggingService.GuardarLogError(ex, $"Error al mover la imagen '{pRuta}' del documento '{pDocumentoID}' al almacenamiento temporal", mLogger);
                 return StatusCode(500);
             }
         }
@@ -1251,8 +1243,8 @@ namespace Gnoss.Web.Intern.Controllers
                 }
                 catch (Exception ex)
                 {
-                    mLoggingService.GuardarLogError(ex);
-                    mLoggingService.GuardarLogError($"Error copiando el archivo de: \n\t{rutaOrigen} \n a {rutaDestino}");
+                    mLoggingService.GuardarLogError(ex, mLogger);
+                    mLoggingService.GuardarLogError($"Error copiando el archivo de: \n\t{rutaOrigen} \n a {rutaDestino}",mLogger);
                     return StatusCode(500);
                 }
             }
@@ -1278,7 +1270,7 @@ namespace Gnoss.Web.Intern.Controllers
                 rutaImagen = Path.Combine(UtilArchivos.ContentImagenesDocumentos, UtilArchivos.ContentImagenesSemanticas, UtilArchivos.DirectorioDocumento(origin_document_id));
                 rutaCopiaImagen = Path.Combine(UtilArchivos.ContentImagenesDocumentos, UtilArchivos.ContentImagenesSemanticas, UtilArchivos.DirectorioDocumento(destination_document_id));
 
-                mGestorArchivos.CopiarArchivosDeDirectorio(rutaImagen, rutaCopiaImagen);
+                mGestorArchivos.CopiarArchivosDeDirectorio(rutaImagen, rutaCopiaImagen, true, true);
 
                 return new EmptyResult();
             }

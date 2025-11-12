@@ -34,37 +34,23 @@ namespace Gnoss.Web.Intern.Controllers
     [ApiController]
     [Route("[controller]")]
     [Authorize]
-    public class DatosController : ControllerBase
+    public class DatosController : ControllerBaseIntern
     {
-        private Conexion _conexion;
-        private LoggingService _loggingService;
-        private EntityContext _entityContext;
-        private ConfigService _configService;
-        protected EntityContext mEntityContext;
-        protected LoggingService mLoggingService;
-        protected ConfigService mConfigService;
-        protected RedisCacheWrapper mRedisCacheWrapper;
-        private IServicesUtilVirtuosoAndReplication mServicesUtilVirtuosoAndReplication;
-        private static object BLOQUEO_COMPROBACION_TRAZA = new object();
-        private static DateTime HORA_COMPROBACION_TRAZA;
-        private ILogger mlogger;
-        private ILoggerFactory mLoggerFactory;
+        private readonly Conexion mConexion;
+        private readonly EntityContext mEntityContext;
+        private readonly IServicesUtilVirtuosoAndReplication mServicesUtilVirtuosoAndReplication;
+        private new readonly ILogger mLogger;
         #region Constructores
 
         /// <summary>
         /// Constructor sin parámetros
         /// </summary>
-        public DatosController(Conexion conexion, LoggingService loggingService, EntityContext entityContext, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, ILogger<DatosController> logger, ILoggerFactory loggerFactory)
+        public DatosController(Conexion conexion, LoggingService loggingService, EntityContext entityContext, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, RedisCacheWrapper redisCacheWrapper, ConfigService configService, ILoggerFactory loggerFactory) : base(loggingService, redisCacheWrapper, configService, loggerFactory)
         {
-            _conexion = conexion;
-            _loggingService = loggingService;
-            _entityContext = entityContext;
+            mConexion = conexion;
+            mEntityContext = entityContext;
             mServicesUtilVirtuosoAndReplication = servicesUtilVirtuosoAndReplication;
-            mlogger = logger;
-            mLoggerFactory = loggerFactory;
-
-            //Eliminar la marca de comentario de la línea siguiente si utiliza los componentes diseñados 
-            //InitializeComponent();
+            mLogger = loggerFactory.CreateLogger<DatosController>();
         }
 
         #endregion
@@ -89,7 +75,7 @@ namespace Gnoss.Web.Intern.Controllers
         {
             string urlServicioWebDocumentacion;
 
-            List<ParametroAplicacion> filas = _entityContext.ParametroAplicacion.Where(parametroApp => parametroApp.Parametro.Equals(TiposParametrosAplicacion.UrlServicioWebDocumentacion)).ToList();
+            List<ParametroAplicacion> filas = mEntityContext.ParametroAplicacion.Where(parametroApp => parametroApp.Parametro.Equals(TiposParametrosAplicacion.UrlServicioWebDocumentacion)).ToList();
 
             if (filas.Count > 0)
             {
@@ -112,10 +98,10 @@ namespace Gnoss.Web.Intern.Controllers
         public void ActualizarPerfilUsuario(Guid pUsuarioID, Guid pPerfilID)
         {
             //IdentidadCN identidadCN = new IdentidadCN("acid", true);
-            IdentidadCN identidadCN = new IdentidadCN(_entityContext, _loggingService, _configService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             if (pPerfilID.Equals(Guid.Empty))
             {
-                UsuarioCN usuarioCN = new UsuarioCN(_entityContext, _loggingService, _configService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
+                UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
                 string login = usuarioCN.ObtenerUsuarioPorID(pUsuarioID).Login;
                 usuarioCN.Dispose();
                 pPerfilID = identidadCN.ObtenerIdentidadIDDeUsuarioEnProyectoYOrg(login, ProyectoAD.MetaProyecto, string.Empty, false)[1];
@@ -136,7 +122,7 @@ namespace Gnoss.Web.Intern.Controllers
                 filaPerfilGadget.Orden = (short)(identidadDW.ListaPerfilGadget.Count);
 
                 identidadDW.ListaPerfilGadget.Add(filaPerfilGadget);
-                _entityContext.PerfilGadget.Add(filaPerfilGadget);
+                mEntityContext.PerfilGadget.Add(filaPerfilGadget);
                 #endregion
 
                 identidadCN.ActualizaIdentidades();
@@ -155,8 +141,8 @@ namespace Gnoss.Web.Intern.Controllers
             XmlDocument documentoXml = new XmlDocument();
             string consumerKey = "";
             string consumerSecret = "";
-            consumerKey = _conexion.ObtenerParametro("config/GnossRedesSociales.config", "TwitterConsumerKey", false);
-            consumerSecret = _conexion.ObtenerParametro("config/GnossRedesSociales.config", "TwitterConsumerSecret", false);
+            consumerKey = mConexion.ObtenerParametro("config/GnossRedesSociales.config", "TwitterConsumerKey", false);
+            consumerSecret = mConexion.ObtenerParametro("config/GnossRedesSociales.config", "TwitterConsumerSecret", false);
             string[] array = { consumerKey, consumerSecret };
             return Ok(array);
         }
@@ -178,43 +164,6 @@ namespace Gnoss.Web.Intern.Controllers
         }
 
         #endregion
-
-        #region Métodos de trazas
-        [NonAction]
-        private void IniciarTraza()
-        {
-            if (DateTime.Now > HORA_COMPROBACION_TRAZA)
-            {
-                lock (BLOQUEO_COMPROBACION_TRAZA)
-                { 
-                    if (DateTime.Now > HORA_COMPROBACION_TRAZA)
-                    {
-                        HORA_COMPROBACION_TRAZA = DateTime.Now.AddSeconds(15);
-                        TrazasCL trazasCL = new TrazasCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<TrazasCL>(), mLoggerFactory);
-                        string tiempoTrazaResultados = trazasCL.ObtenerTrazaEnCache("intern");
-
-                        if (!string.IsNullOrEmpty(tiempoTrazaResultados))
-                        {
-                            int valor = 0;
-                            int.TryParse(tiempoTrazaResultados, out valor);
-                            LoggingService.TrazaHabilitada = true;
-                            LoggingService.TiempoMinPeticion = valor; //Para sacar los segundos
-                        }
-                        else
-                        {
-                            LoggingService.TrazaHabilitada = false;
-                            LoggingService.TiempoMinPeticion = 0;
-                        }
-                    }
-                }
-            }
-        }
-        #endregion
-        [NonAction]
-        public virtual void OnActionExecuting(ActionExecutingContext filterContext)
-        {
-            IniciarTraza();
-        }
     }
 
 }

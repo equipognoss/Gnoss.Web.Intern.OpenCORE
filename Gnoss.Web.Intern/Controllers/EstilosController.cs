@@ -1,4 +1,5 @@
-﻿using Es.Riam.Gnoss.FileManager;
+﻿using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.FileManager;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.InterfacesOpenArchivos;
@@ -23,7 +24,7 @@ namespace Gnoss.Web.Intern.Controllers
     [Route("[controller]")]
     [ApiController]
     [Authorize]
-    public class EstilosController : ControllerBase
+    public class EstilosController : ControllerBaseIntern
     {
         #region Miembros
 
@@ -46,24 +47,18 @@ namespace Gnoss.Web.Intern.Controllers
         private static string mAzureStorageConnectionStringOntologias = "";
 
         private GestionArchivos mGestorArchivos;
-        private ConfigService _configService;
         private IHostingEnvironment _env;
         private IHttpContextAccessor _httpContextAccessor;
-        private LoggingService _loggingService;
         private GestionArchivos mGestorArchivosOntologias;
         private FileOperationsService _fileOperationsService;
         private IUtilArchivos _utilArchivos;
-        private ILogger mlogger;
-        private ILoggerFactory mLoggerFactory;
+        private new readonly ILogger mLogger;
         #endregion
 
-        public EstilosController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IHostingEnvironment env, ConfigService configService, IUtilArchivos utilArchivos, ILogger<EstilosController> logger, ILoggerFactory loggerFactory)
+        public EstilosController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IHostingEnvironment env, ConfigService configService, IUtilArchivos utilArchivos, RedisCacheWrapper redisCacheWrapper, ILoggerFactory loggerFactory) : base(loggingService, redisCacheWrapper, configService, loggerFactory)
         {
-            _configService = configService;
-            _loggingService = loggingService;
             _httpContextAccessor = httpContextAccessor;
-            mlogger = logger;
-            mLoggerFactory = loggerFactory;
+            mLogger = loggerFactory.CreateLogger<EstilosController>();
             mRutaImagenes = configService.GetRutaImagenes();
             if (string.IsNullOrEmpty(mRutaImagenes))
             {
@@ -75,13 +70,13 @@ namespace Gnoss.Web.Intern.Controllers
             {
                 mRutaOntologias = Path.Combine(env.ContentRootPath, UtilArchivos.ContentOntologias);
             }
-            
+
             _env = env;
-            _fileOperationsService = new FileOperationsService(_loggingService, _env);
+            _fileOperationsService = new FileOperationsService(mLoggingService, _env);
 
             mRutaZipExe = Path.Combine(env.ContentRootPath, "zip");
 
-            mAzureStorageConnectionString = _configService.ObtenerAzureStorageConnectionString();
+            mAzureStorageConnectionString = mConfigService.ObtenerAzureStorageConnectionString();
 
             if (!string.IsNullOrEmpty(mAzureStorageConnectionString))
             {
@@ -98,7 +93,7 @@ namespace Gnoss.Web.Intern.Controllers
         }
 
         #region Metodos
-        
+
 
         [HttpPost]
         [RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
@@ -123,7 +118,7 @@ namespace Gnoss.Web.Intern.Controllers
             else
             {
                 ruta = Path.Combine("proyectos", "personalizacion", personalizacion, "versiones", pNombreVersion);
-                rutaRaizVersiones = Path.Combine("proyectos", "personalizacion", personalizacion, "versiones", pNombreVersion, "historial" );
+                rutaRaizVersiones = Path.Combine("proyectos", "personalizacion", personalizacion, "versiones", pNombreVersion, "historial");
                 rutaVersion = Path.Combine("proyectos", "personalizacion", personalizacion, "versiones", pNombreVersion, "historial", pFecha);
             }
             try
@@ -150,7 +145,7 @@ namespace Gnoss.Web.Intern.Controllers
                     //}
                     string rutaZip = mGestorArchivos.ObtenerRutaDirectorioZip(ruta);
                     //ProcessStartInfo procStartInfo = new ProcessStartInfo(Path.Combine(mRutaZipExe, "7z.exe"), $" x -y \"{Path.Combine("historial",pFecha,pNombre + pExtension)}\"");
-                    ProcessStartInfo procStartInfo = new ProcessStartInfo("unzip", $" -o \"{Path.Combine("historial",pFecha,pNombre + pExtension)}\"");
+                    ProcessStartInfo procStartInfo = new ProcessStartInfo("unzip", $" -o \"{Path.Combine("historial", pFecha, pNombre + pExtension)}\"");
                     procStartInfo.RedirectStandardOutput = true;
                     procStartInfo.WorkingDirectory = rutaZip;
                     procStartInfo.UseShellExecute = false;
@@ -233,7 +228,7 @@ namespace Gnoss.Web.Intern.Controllers
                 }
             }
             catch (Exception ex)
-            {}
+            { }
         }
 
         [HttpPost]
@@ -324,7 +319,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _loggingService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex,mLogger);
                 _fileOperationsService.GuardarLogError(ex);
             }
             return null;

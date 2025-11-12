@@ -1,4 +1,6 @@
-﻿using Es.Riam.Gnoss.Util.Configuracion;
+﻿using BeetleX;
+using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.InterfacesOpenArchivos;
 using Es.Riam.Util;
@@ -7,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Azure.Amqp.Framing;
+using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using System;
 using System.IO;
@@ -15,16 +18,15 @@ using System.Net.Mime;
 namespace Gnoss.Web.Intern.Controllers
 {
     [Route("content/{*redirect}")]
-    public class ContentController : Controller
+    public class ContentController : ControllerBaseIntern
     {
-
-        private LoggingService mLoggingService;
         private static string mDirectorioPrincipal;
         private const string CONTENT_RELATIVE_PATH = "/content/";
+        private new readonly ILogger mLogger;
 
-        public ContentController(LoggingService loggingService, IHostingEnvironment env, ConfigService configService)
+        public ContentController(LoggingService loggingService, IHostingEnvironment env, ConfigService configService, RedisCacheWrapper redisCacheWrapper, ILogger<ContentController> logger, ILoggerFactory loggerFactory):base(loggingService, redisCacheWrapper, configService, loggerFactory)
         {
-            mLoggingService = loggingService;
+            mLogger = logger;
 
             if (string.IsNullOrEmpty(mDirectorioPrincipal))
             {
@@ -57,12 +59,12 @@ namespace Gnoss.Web.Intern.Controllers
                 }
                 else
                 {
-                    mLoggingService.GuardarLogError($"El archivo {Request.Path.Value} no existe");
+                    mLoggingService.GuardarLogError($"El archivo {Request.Path.Value} no existe",mLogger);
                 }
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al obtener el archivo {Request.Path.Value}");
+                mLoggingService.GuardarLogError(ex, $"Error al obtener el archivo {Request.Path.Value}", mLogger);
             }
 
             return NotFound();

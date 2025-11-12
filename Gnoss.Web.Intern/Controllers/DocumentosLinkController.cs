@@ -1,4 +1,5 @@
-﻿using Es.Riam.Gnoss.CL.ServiciosGenerales;
+﻿using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.FileManager;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
@@ -26,7 +27,7 @@ namespace Gnoss.Web.Intern.Controllers
     [System.ComponentModel.ToolboxItem(false)]
     // Para permitir que se llame a este servicio Web desde un script, usando ASP.NET AJAX, quite la marca de comentario de la línea siguiente. 
     // [System.Web.Script.Services.ScriptService]
-    public class DocumentosLinkController : ControllerBase
+    public class DocumentosLinkController : ControllerBaseIntern
     {
         #region Miembros
 
@@ -34,38 +35,31 @@ namespace Gnoss.Web.Intern.Controllers
 
         public static string mAzureStorageConnectionString;
 
-        private GestionArchivos mGestorArchivos;
-
-        private LoggingService _loggingService;
+        private readonly GestionArchivos mGestorArchivos;
 
         private IHttpContextAccessor _httpContextAccessor;
 
         private IHostingEnvironment _env;
-        private ConfigService _configService;
         private FileOperationsService _fileOperationsService;
         private IUtilArchivos _utilArchivos;
-        private ILogger mlogger;
-        private ILoggerFactory mLoggerFactory;
+        private readonly new ILogger mLogger;
         #endregion
 
         #region Constructor
 
-        public DocumentosLinkController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IHostingEnvironment env, ConfigService configService, IUtilArchivos utilArchivos, ILogger<DocumentosLinkController> logger, ILoggerFactory loggerFactory)
+        public DocumentosLinkController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IHostingEnvironment env, ConfigService configService, IUtilArchivos utilArchivos,RedisCacheWrapper redisCacheWrapper, ILoggerFactory loggerFactory):base(loggingService,redisCacheWrapper,configService, loggerFactory)
         {
-            _loggingService = loggingService;
             _httpContextAccessor = httpContextAccessor;
             _env = env;
-            _configService = configService;
-            mlogger = logger;
-            mLoggerFactory = loggerFactory;
+            mLogger = mLoggerFactory.CreateLogger<DocumentosLinkController>();
             mRutaDocumentos = configService.GetRutaDoclinks();
             if (string.IsNullOrEmpty(mRutaDocumentos))
             {
                 mRutaDocumentos = Path.Combine(env.ContentRootPath, UtilArchivos.ContentDocLinks);
             }
-            _fileOperationsService = new FileOperationsService(_loggingService, _env);
+            _fileOperationsService = new FileOperationsService(mLoggingService, _env);
 
-            mAzureStorageConnectionString = _configService.ObtenerAzureStorageConnectionString();
+            mAzureStorageConnectionString = mConfigService.ObtenerAzureStorageConnectionString();
 
             if (!string.IsNullOrEmpty(mAzureStorageConnectionString))
             {
@@ -76,7 +70,7 @@ namespace Gnoss.Web.Intern.Controllers
                 mAzureStorageConnectionString = "";
             }
             _utilArchivos = utilArchivos;
-            mGestorArchivos = new GestionArchivos(_loggingService, utilArchivos, mLoggerFactory.CreateLogger<GestionArchivos>(), mLoggerFactory, pRutaArchivos: mRutaDocumentos, pAzureStorageConnectionString: mAzureStorageConnectionString);
+            mGestorArchivos = new GestionArchivos(mLoggingService, utilArchivos, mLoggerFactory.CreateLogger<GestionArchivos>(), mLoggerFactory, pRutaArchivos: mRutaDocumentos, pAzureStorageConnectionString: mAzureStorageConnectionString);
         }
 
         #endregion
@@ -127,7 +121,7 @@ namespace Gnoss.Web.Intern.Controllers
                         pFile.path = pFile.path.Substring("imagenes/".Length);
                     }
                 }
-                mGestorArchivos.RutaFicheros = _configService.GetRutaImagenes();
+                mGestorArchivos.RutaFicheros = mConfigService.GetRutaImagenes();
                 if (string.IsNullOrEmpty(mGestorArchivos.RutaFicheros))
                 {
                     mGestorArchivos.RutaFicheros = Path.Combine(_env.ContentRootPath, UtilArchivos.ContentImagenes);
@@ -159,7 +153,7 @@ namespace Gnoss.Web.Intern.Controllers
                         pFile.path = pFile.path.Substring("imagenes/".Length);
                     }
                 }
-                mGestorArchivos.RutaFicheros = _configService.GetRutaImagenes();
+                mGestorArchivos.RutaFicheros = mConfigService.GetRutaImagenes();
                 if (string.IsNullOrEmpty(mGestorArchivos.RutaFicheros))
                 {
                     mGestorArchivos.RutaFicheros = Path.Combine(_env.ContentRootPath, UtilArchivos.ContentImagenes);
@@ -239,13 +233,13 @@ namespace Gnoss.Web.Intern.Controllers
                 }
                 else
                 {
-                    _loggingService.GuardarLog($"El directorio {relative_path} no existe.");
+                    mLoggingService.GuardarLog($"El directorio {relative_path} no existe.", mLogger);
                     return new EmptyResult();
                 }
             }
             catch (Exception ex)
             {
-                _loggingService.GuardarLogError(ex, $"Error al mover los documentos link del directorio '{relative_path}'");
+                mLoggingService.GuardarLogError(ex, $"Error al mover los documentos link del directorio '{relative_path}'", mLogger);
                 return StatusCode(500);
             }
         }
@@ -273,7 +267,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _loggingService.GuardarLogError(ex, $"Error al mover el documento link {pDocLink} del recurso modificado '{pDocumentoID}'");
+                mLoggingService.GuardarLogError(ex, $"Error al mover el documento link {pDocLink} del recurso modificado '{pDocumentoID}'", mLogger);
                 return StatusCode(500);
             }
         }
@@ -285,7 +279,7 @@ namespace Gnoss.Web.Intern.Controllers
         /// <param name="pDocumentoIDDestino">ID del documento de destino</param>
         /// <returns>TRUE si ha ido bien, FALSE si no</returns>
         [HttpPut]
-        [Route("BorrarDocumentoDeDirectorio")]
+        [Route("CopiarDocumentoDeDirectorio")]
         public IActionResult CopiarArchivosDocumento(Guid pDocumentoIDOrigen, Guid pDocumentoIDDestino)
         {
             try
