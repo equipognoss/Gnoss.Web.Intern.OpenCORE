@@ -224,38 +224,32 @@ namespace Gnoss.Web.Intern.Controllers
         [HttpPost]
         [Route("DescargarZIP")]
         public ActionResult DescargarZIP(Guid? pProyectoID, string pNombreCarpeta = null)
-        {
-            byte[] respuesta = null;
-            // Ruta archivos en uso
-            string personalizacion = (pProyectoID.HasValue ? pProyectoID.Value.ToString() : "ecosistema");
+        {            
+            string rutaExportaciones = Path.Combine(Directory.GetCurrentDirectory(), "exports");
+            Console.WriteLine($"Comienzo descarga archivos multimedia Ruta Exportaciones: {rutaExportaciones}");
+            EliminarDescargasResiduales(rutaExportaciones);
 
-            //GuardarLogTest("Entra peticion descargaZip ObjetosMultimedia");
+            byte[] respuesta = null;
+            
+            string personalizacion = pProyectoID.HasValue ? pProyectoID.Value.ToString() : "ecosistema";
 
             personalizacion = (string.IsNullOrEmpty(pNombreCarpeta) ? personalizacion : pNombreCarpeta);
 
             string ruta = Path.Combine("proyectos", "personalizacion", personalizacion, "cms");
-            //GuardarLogTest("La ruta para la descarga de ObjetosMultimedia es: " + mRutaImagenes + "\\" + ruta);
 
             try
             {
-                //AzureStorage azureStorage = null;
-                //if (!string.IsNullOrEmpty(mAzureStorageConnectionString))
-                //{
-                //    GuardarLogTest("La cadena de conexion a Azure es: " + mAzureStorageConnectionString);
-                //    azureStorage = new AzureStorage(mAzureStorageConnectionString);
-                //}
-
                 string rutaZip = mGestorArchivos.ObtenerRutaDirectorioZip(ruta);
-                //WIN
-                //System.Diagnostics.ProcessStartInfo procStartInfo = new System.Diagnostics.ProcessStartInfo(Path.Combine(mRutaZipExe, "7z.exe"), " a ObjetosMultimedia.zip");
-                //LINUX
-                ProcessStartInfo procStartInfo = new ProcessStartInfo("zip", $"-r ObjetosMultimedia.zip . -i *");
+                string nombreFicheroZip = $"ObjetosMultimedia_{DateTime.Now.ToString("yyyyMMddHHmmss")}.zip";
+                Console.WriteLine($"Inicio proceso zip: {nombreFicheroZip}");
+                ProcessStartInfo procStartInfo = new ProcessStartInfo("zip", $"-rq {nombreFicheroZip} {rutaExportaciones} -i *");
                 procStartInfo.RedirectStandardOutput = true;
                 procStartInfo.WorkingDirectory = rutaZip;
                 procStartInfo.UseShellExecute = false;
                 procStartInfo.CreateNoWindow = false;
+
                 //Inicializa el proceso
-                System.Diagnostics.Process proc = new System.Diagnostics.Process();
+                Process proc = new Process();
                 proc.StartInfo = procStartInfo;
                 proc.Start();
                 while (!proc.StandardOutput.EndOfStream)
@@ -263,13 +257,12 @@ namespace Gnoss.Web.Intern.Controllers
                     string line = proc.StandardOutput.ReadLine();
                 }
 
-                byte[] ficheroZip = System.IO.File.ReadAllBytes(Path.Combine(mRutaImagenes, ruta, "ObjetosMultimedia.zip"));
+                respuesta = System.IO.File.ReadAllBytes(Path.Combine(mRutaImagenes, rutaExportaciones, nombreFicheroZip));
 
-                respuesta = ficheroZip.ToArray();
-
-                if (System.IO.File.Exists(Path.Combine(mRutaImagenes, ruta, "ObjetosMultimedia.zip")))
+                if (System.IO.File.Exists(Path.Combine(rutaExportaciones, nombreFicheroZip)))
                 {
-                    System.IO.File.Delete(Path.Combine(mRutaImagenes, ruta, "ObjetosMultimedia.zip"));
+                    Console.WriteLine($"Elimino dichero residual de: {Path.Combine(rutaExportaciones, nombreFicheroZip)}");
+                    System.IO.File.Delete(Path.Combine(rutaExportaciones, nombreFicheroZip));
                 }
                 return File(respuesta, "application/zip");
             }
@@ -280,7 +273,37 @@ namespace Gnoss.Web.Intern.Controllers
             }
         }
 
-      
+        /// <summary>
+        /// Se encarga de eliminar todos los archivos residuales que han podido quedar 
+        /// si ha ocurrido algún error durante la compresión, como una caida del contenedor
+        /// </summary>
+        /// <param name="pRutaExportaciones">Ruta donde vamos a eliminar los ficheros</param>
+        private void EliminarDescargasResiduales(string pRutaExportaciones)
+        {
+            if (Directory.Exists(pRutaExportaciones))
+            {
+                DirectoryInfo dirInfo = new DirectoryInfo(pRutaExportaciones);
+                foreach (FileInfo file in dirInfo.GetFiles())
+                {
+                    if (file.CreationTime < DateTime.Now.AddHours(-1))
+                    {
+                        try
+                        {
+                            file.Delete();
+                        }
+                        catch (Exception ex)
+                        {
+                            mLoggingService.GuardarLogError(ex);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                Directory.CreateDirectory(pRutaExportaciones);
+            }
+        }
+
         #endregion
     }
 }

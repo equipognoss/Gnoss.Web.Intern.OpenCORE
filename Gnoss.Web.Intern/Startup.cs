@@ -92,36 +92,17 @@ namespace Gnoss.Web.Intern
                 services.AddScoped(typeof(DbContextOptions<EntityContext>));
             }
             services.AddSingleton(typeof(ConfigService));
-            string acid = "";
-            if (environmentVariables.Contains("acid"))
-            {
-                acid = environmentVariables["acid"] as string;
-            }
-            else
-            {
-                acid = Configuration.GetConnectionString("acid");
-            }
             if (bdType.Equals("0"))
             {
-                services.AddDbContext<EntityContext>(options =>
-                        options.UseSqlServer(acid, o => o.UseCompatibilityLevel(110))
-                        );
+                services.AddDbContext<EntityContext>();
             }
-			else if (bdType.Equals("1"))
-			{
-				services.AddDbContext<EntityContext, EntityContextOracle>(options =>
-						options.UseOracle(acid)
-						);
-			}
-			else if (bdType.Equals("2"))
+            else if (bdType.Equals("1"))
             {
-                services.AddDbContext<EntityContext, EntityContextPostgres>(opt =>
-                {
-                    var builder = new NpgsqlDbContextOptionsBuilder(opt);
-                    builder.SetPostgresVersion(new Version(9, 6));
-                    opt.UseNpgsql(acid);
-
-                });
+                services.AddDbContext<EntityContext, EntityContextOracle>();
+            }
+            else if (bdType.Equals("2"))
+            {
+                services.AddDbContext<EntityContext, EntityContextPostgres>();
             }
             LoggingService.RUTA_DIRECTORIO_ERROR = Path.Combine(mEnvironment.ContentRootPath, "logs");
 			
