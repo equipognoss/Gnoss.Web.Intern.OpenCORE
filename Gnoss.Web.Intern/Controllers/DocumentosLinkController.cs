@@ -278,7 +278,7 @@ namespace Gnoss.Web.Intern.Controllers
         /// <param name="pDocumentoIDOrigen">ID del documento de origen</param>
         /// <param name="pDocumentoIDDestino">ID del documento de destino</param>
         /// <returns>TRUE si ha ido bien, FALSE si no</returns>
-        [HttpPut]
+        [HttpGet]
         [Route("CopiarDocumentoDeDirectorio")]
         public IActionResult CopiarArchivosDocumento(Guid pDocumentoIDOrigen, Guid pDocumentoIDDestino)
         {
@@ -292,6 +292,34 @@ namespace Gnoss.Web.Intern.Controllers
 
                     mGestorArchivos.CopiarArchivosDeDirectorio(directorioOrigen, directorioDestino);
                 }
+
+                return Ok(true);
+            }
+            catch (Exception ex)
+            {
+                _fileOperationsService.GuardarLogError(ex);
+                return BadRequest(false);
+            }
+        }
+
+        /// <summary>
+        /// Copia los archivos de un documento a otro.
+        /// </summary>
+        /// <param name="pDocumentoIDOrigen">ID del documento de origen</param>
+        /// <param name="pDocumentoIDDestino">ID del documento de destino</param>
+        /// <param name="pNombreArchivoLink">Nombre del archivo a copiar</param>
+        /// <returns>TRUE si ha ido bien, FALSE si no</returns>
+        [HttpGet]
+        [Route("CopiarArchivoLinkDocumento")]
+        public IActionResult CopiarArchivoLinkDocumento(Guid pDocumentoIDOrigen, Guid pDocumentoIDDestino, string pNombreArchivoLink)
+        {
+            try
+            {
+                //Directorio antiguo
+                string rutaArchivoOrigen = Path.Combine(UtilArchivos.DirectorioDocumento(pDocumentoIDOrigen));
+                string rutaArchivoDestino = Path.Combine(UtilArchivos.DirectorioDocumento(pDocumentoIDDestino));
+              
+                mGestorArchivos.CopiarArchivo(rutaArchivoOrigen, rutaArchivoDestino, pNombreArchivoLink, true);               
 
                 return Ok(true);
             }

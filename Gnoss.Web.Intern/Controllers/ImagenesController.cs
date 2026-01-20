@@ -1282,6 +1282,33 @@ namespace Gnoss.Web.Intern.Controllers
         }
 
         /// <summary>
+        /// Copia la imagen indicada de un recurso semántico del recurso original al directorio del recurso indicado. En caso 
+        /// de no definir la extensión en el nombre de la imagen, se copiará tanto la imagen como todos sus recortes.
+        /// </summary>
+        /// <param name="origin_document_id">Identificador del documento de donde se quiere obtener la imagen</param>
+        /// <param name="destination_document_id">Identificador del documento destino donde se quiere alojar la imagen</param>
+        /// <param name="name_image">Nombre de la imagen. Si no tiene extensión se copiarán todos los recortes de esta imagen</param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("copy-semantic-image")]
+        public IActionResult CopiarImagenSemantica(Guid origin_document_id, Guid destination_document_id, string name_image)
+        {
+            //Directorio antiguo
+            string rutaImagenOrigen = Path.Combine(UtilArchivos.ContentImagenesDocumentos, "ImagenesSemanticas", origin_document_id.ToString());
+            string rutaImagenDestino = Path.Combine(UtilArchivos.ContentImagenesDocumentos, "ImagenesSemanticas", destination_document_id.ToString());
+
+            mGestorArchivos.CopiarArchivo(rutaImagenOrigen, rutaImagenDestino, name_image, true);
+
+            //Directorio nuevo
+            rutaImagenOrigen = Path.Combine(UtilArchivos.ContentImagenesDocumentos, UtilArchivos.ContentImagenesSemanticas, origin_document_id.ToString(), name_image);
+            rutaImagenDestino = Path.Combine(UtilArchivos.ContentImagenesDocumentos, UtilArchivos.ContentImagenesSemanticas, destination_document_id.ToString(), name_image);
+
+            mGestorArchivos.CopiarArchivo(rutaImagenOrigen, rutaImagenDestino, name_image, true);
+
+            return new EmptyResult();
+        }
+
+        /// <summary>
         /// Obtiene la imágen de un documento de tipo imágen.
         /// </summary>
         /// <param name="pNombre">Identificador del documento</param>
