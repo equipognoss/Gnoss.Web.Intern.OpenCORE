@@ -233,7 +233,7 @@ namespace Gnoss.Web.Intern.Controllers
                 }
                 else
                 {
-                    mLoggingService.GuardarLog($"El directorio {relative_path} no existe.", mLogger);
+                    mLoggingService.AgregarEntrada($"El directorio {relative_path} no existe.");
                     return new EmptyResult();
                 }
             }

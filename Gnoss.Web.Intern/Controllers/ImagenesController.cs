@@ -858,7 +858,7 @@ namespace Gnoss.Web.Intern.Controllers
                 }
                 else
                 {
-                    mLoggingService.GuardarLogError($"El directorio {relative_path} no existe.", mLogger);
+                    mLoggingService.AgregarEntrada($"El directorio {relative_path} no existe.");
                     return new EmptyResult();
                 }
             }
@@ -881,20 +881,23 @@ namespace Gnoss.Web.Intern.Controllers
                     Directory.CreateDirectory(rutaTemporal);
                 }
                 List<string> ficherosRecurso = ObtenerFicherosRecurso(pDocumentoID);
-                List<string> ficherosAEliminar = ObtenerFicherosAEliminarDeRecurso(pDocumentoID, ficherosRecurso);
-                foreach (string file in ficherosAEliminar)
+                if (ficherosRecurso.Count > 0)
                 {
-                    string nombreFichero = file.Substring(file.LastIndexOf(Path.DirectorySeparatorChar) + 1);
-                    string ficheroTemp = Path.Combine(rutaTemporal, nombreFichero);
-                    mGestorArchivos.MoverArchivo(file, ficheroTemp, true);
-                }
+					List<string> ficherosAEliminar = ObtenerFicherosAEliminarDeRecurso(pDocumentoID, ficherosRecurso);
+					foreach (string file in ficherosAEliminar)
+					{
+						string nombreFichero = file.Substring(file.LastIndexOf(Path.DirectorySeparatorChar) + 1);
+						string ficheroTemp = Path.Combine(rutaTemporal, nombreFichero);
+						mGestorArchivos.MoverArchivo(file, ficheroTemp, true);
+					}
 
-                List<string> directoriosOpenSeaDragonEliminar = ObtenerDirectoriosOpenSeaDragonAEliminarDeRecursoModificado(pDocumentoID, ficherosRecurso);
-                foreach (string carpeta in directoriosOpenSeaDragonEliminar)
-                {
-                    string carpetaTemp = Path.Combine(rutaTemporal, carpeta);
-                    mGestorArchivos.MoverContenidoDirectorio(carpeta, carpetaTemp);
-                }
+					List<string> directoriosOpenSeaDragonEliminar = ObtenerDirectoriosOpenSeaDragonAEliminarDeRecursoModificado(pDocumentoID, ficherosRecurso);
+					foreach (string carpeta in directoriosOpenSeaDragonEliminar)
+					{
+						string carpetaTemp = Path.Combine(rutaTemporal, carpeta);
+						mGestorArchivos.MoverContenidoDirectorio(carpeta, carpetaTemp);
+					}
+				}                
 
                 return Ok();
             }
