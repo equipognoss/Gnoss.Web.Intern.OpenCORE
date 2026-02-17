@@ -1303,8 +1303,8 @@ namespace Gnoss.Web.Intern.Controllers
             mGestorArchivos.CopiarArchivo(rutaImagenOrigen, rutaImagenDestino, name_image, true);
 
             //Directorio nuevo
-            rutaImagenOrigen = Path.Combine(UtilArchivos.ContentImagenesDocumentos, UtilArchivos.ContentImagenesSemanticas, origin_document_id.ToString(), name_image);
-            rutaImagenDestino = Path.Combine(UtilArchivos.ContentImagenesDocumentos, UtilArchivos.ContentImagenesSemanticas, destination_document_id.ToString(), name_image);
+            rutaImagenOrigen = Path.Combine(UtilArchivos.ContentImagenesDocumentos, UtilArchivos.ContentImagenesSemanticas, UtilArchivos.DirectorioDocumento(origin_document_id));
+            rutaImagenDestino = Path.Combine(UtilArchivos.ContentImagenesDocumentos, UtilArchivos.ContentImagenesSemanticas, UtilArchivos.DirectorioDocumento(destination_document_id));
 
             mGestorArchivos.CopiarArchivo(rutaImagenOrigen, rutaImagenDestino, name_image, true);
 
