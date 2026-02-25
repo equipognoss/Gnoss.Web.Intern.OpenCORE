@@ -9,13 +9,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl
 
 WORKDIR /app
 
-COPY Gnoss.Web.Intern/*.csproj ./
-
-RUN dotnet restore
-
 COPY . ./
 
-RUN dotnet publish Gnoss.Web.Intern/Gnoss.Web.Intern.csproj -c Release -o out
+RUN dotnet restore Gnoss.Web.Intern.OpenCORE/Gnoss.Web.Intern/Gnoss.Web.Intern.csproj
+
+RUN dotnet publish Gnoss.Web.Intern.OpenCORE/Gnoss.Web.Intern/Gnoss.Web.Intern.csproj -c Release -o out
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 
