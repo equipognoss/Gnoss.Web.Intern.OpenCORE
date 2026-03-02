@@ -242,9 +242,9 @@ namespace Gnoss.Web.Intern.Controllers
                 string rutaZip = mGestorArchivos.ObtenerRutaDirectorioZip(ruta);
                 string nombreFicheroZip = $"ObjetosMultimedia_{DateTime.Now.ToString("yyyyMMddHHmmss")}.zip";
                 Console.WriteLine($"Inicio proceso zip: {nombreFicheroZip}");
-                ProcessStartInfo procStartInfo = new ProcessStartInfo("zip", $"-rq {nombreFicheroZip} {rutaExportaciones} -i *");
+                ProcessStartInfo procStartInfo = new ProcessStartInfo("zip", $"-rq {nombreFicheroZip} {rutaZip} -i *");
                 procStartInfo.RedirectStandardOutput = true;
-                procStartInfo.WorkingDirectory = rutaZip;
+                procStartInfo.WorkingDirectory = rutaExportaciones;
                 procStartInfo.UseShellExecute = false;
                 procStartInfo.CreateNoWindow = false;
 
