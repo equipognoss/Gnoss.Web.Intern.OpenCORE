@@ -100,7 +100,7 @@ namespace Gnoss.Web.Intern.Controllers
         {
 
             Byte[] pFichero = _fileOperationsService.ReadFileBytes(file);
-            _fileOperationsService.GuardarLogError("Entra en el AgregarZIP");
+            mLoggingService.GuardarLogDebug("Entra en el AgregarZIP", mLogger);
 
             string personalizacion = (pProyectoID.HasValue ? pProyectoID.Value.ToString() : "ecosistema");
             personalizacion = (string.IsNullOrEmpty(pNombreCarpeta) ? personalizacion : pNombreCarpeta);
@@ -112,8 +112,8 @@ namespace Gnoss.Web.Intern.Controllers
             mGestorArchivos.EliminarFicheroFisico(ruta, "objetosMultimedia.zip");
 
             string rutaZip = mGestorArchivos.ObtenerRutaDirectorioZip(ruta);
-            _fileOperationsService.GuardarLogError("Empieza el proceso de copiado del fichero");
-            _fileOperationsService.GuardarLogError("Bytes del fichero: " + pFichero.Length);
+            mLoggingService.GuardarLogDebug("Empieza el proceso de copiado del fichero", mLogger);
+            mLoggingService.GuardarLogDebug("Bytes del fichero: " + pFichero.Length, mLogger);
 
             try
             {
@@ -121,18 +121,18 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return Content("ERROR");
             }
 
             try
             {
                 FileInfo archivo = new FileInfo(Path.Combine(rutaZip, "objetosMultimedia.zip"));
-                _fileOperationsService.GuardarLogError("Fichero copiado");
+                mLoggingService.GuardarLogDebug("Fichero copiado", mLogger);
 
                 if (archivo.Exists)
                 {
-                    _fileOperationsService.GuardarLogError("Bytes del fichero: " + archivo.Length);
+                    mLoggingService.GuardarLogDebug("Bytes del fichero: " + archivo.Length, mLogger);
                 }
                 //WIN
                 //System.Diagnostics.ProcessStartInfo procStartInfo = new System.Diagnostics.ProcessStartInfo(Path.Combine(mRutaZipExe, "7z.exe"), $" x -y objetosMultimedia.zip");
@@ -155,19 +155,21 @@ namespace Gnoss.Web.Intern.Controllers
                     sb.AppendLine(proc.StandardOutput.ReadLine());
                 }
 
+                mLoggingService.GuardarLogDebug(sb.ToString(), mLogger);
+
                 if (proc.ExitCode != 0)
                 {
+                    StringBuilder error = new StringBuilder();
                     while (!proc.StandardError.EndOfStream)
                     {
-                        sb.AppendLine("Error: ");
-                        sb.AppendLine(proc.StandardError.ReadLine());
+                        error.AppendLine("Error: ");
+                        error.AppendLine(proc.StandardError.ReadLine());
                     }
-                    //throw new Exception($"Error al ejecutar el nuget.exe con la instrucción: \n\t\"{proc.StartInfo.Arguments}\". Respuesta: {sb.ToString()}");
-                }
-                _fileOperationsService.GuardarLogError(sb.ToString());
-                _fileOperationsService.GuardarLogError("Descomprimido");
+                    mLoggingService.GuardarLogError(error.ToString(), mLogger);
+                } 
+                mLoggingService.GuardarLogDebug("Descomprimido", mLogger);
 
-                _fileOperationsService.GuardarLogError("Eliminar los ficheros");
+                mLoggingService.GuardarLogDebug("Eliminar los ficheros", mLogger);
                 mGestorArchivos.EliminarFicheroFisico(ruta, "objetosMultimedia.zip");
 
                 if (Directory.Exists(Path.Combine(mRutaImagenes, ruta, "_rels")))
@@ -198,26 +200,8 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return Content("ERROR");
-            }
-        }
-
-        [NonAction]
-        public static void GuardarLogTest(string message)
-        {
-            try
-            {
-                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs", "error_servicioInterno.txt"), true, System.Text.Encoding.Default))
-                {
-                    sw.WriteLine(Environment.NewLine + "Fecha: " + DateTime.Now + Environment.NewLine + Environment.NewLine);
-                    // Escribo el error
-                    sw.WriteLine(message);
-                }
-            }
-            catch (Exception ex)
-            {
-
             }
         }
 
@@ -268,7 +252,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return Content("ERROR");
             }
         }
@@ -293,7 +277,7 @@ namespace Gnoss.Web.Intern.Controllers
                         }
                         catch (Exception ex)
                         {
-                            mLoggingService.GuardarLogError(ex);
+                            mLoggingService.GuardarLogError(ex, mLogger);
                         }
                     }
                 }

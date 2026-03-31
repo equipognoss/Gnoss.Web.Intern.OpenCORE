@@ -210,25 +210,9 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return Content("ERROR");
             }
-        }
-
-        [NonAction]
-        public static void GuardarLogTest(string message)
-        {
-            try
-            {
-                using (StreamWriter sw = new StreamWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs", "error_servicioInterno.txt"), true, System.Text.Encoding.Default))
-                {
-                    sw.WriteLine(Environment.NewLine + "Fecha: " + DateTime.Now + Environment.NewLine + Environment.NewLine);
-                    // Escribo el error
-                    sw.WriteLine(message);
-                }
-            }
-            catch (Exception ex)
-            { }
         }
 
         [HttpPost]
@@ -238,7 +222,7 @@ namespace Gnoss.Web.Intern.Controllers
 
             string personalizacion = (pProyectoID.HasValue ? pProyectoID.Value.ToString() : "ecosistema");
 
-            //GuardarLogTest("Entra peticion descargaZip Estilos");
+            mLoggingService.GuardarLogDebug("Entra peticion descargaZip Estilos", mLogger);
 
             personalizacion = (string.IsNullOrEmpty(pNombreCarpeta) ? personalizacion : pNombreCarpeta);
 
@@ -255,7 +239,7 @@ namespace Gnoss.Web.Intern.Controllers
                 ruta = Path.Combine("proyectos", "personalizacion", personalizacion, "versiones", pNombreVersion);
             }
 
-            //GuardarLogTest("La ruta donde estaran los estilos es la siguiente: " + mRutaImagenes + "\\" + ruta);
+            mLoggingService.GuardarLogDebug("La ruta donde estaran los estilos es la siguiente: " + mRutaImagenes + "\\" + ruta, mLogger);
 
             try
             {
@@ -320,7 +304,6 @@ namespace Gnoss.Web.Intern.Controllers
             catch (Exception ex)
             {
                 mLoggingService.GuardarLogError(ex,mLogger);
-                _fileOperationsService.GuardarLogError(ex);
             }
             return null;
         }
@@ -410,7 +393,7 @@ namespace Gnoss.Web.Intern.Controllers
 
             string personalizacion = (pProyectoID.HasValue ? pProyectoID.Value.ToString() : "ecosistema");
 
-            //GuardarLogTest("Entra peticion descargaZip Estilos");
+            mLoggingService.GuardarLogDebug("Entra peticion descargaZip Estilos", mLogger);
 
             personalizacion = (string.IsNullOrEmpty(pNombreCarpeta) ? personalizacion : pNombreCarpeta);
 
@@ -428,7 +411,7 @@ namespace Gnoss.Web.Intern.Controllers
                 ruta = Path.Combine("proyectos", "personalizacion", personalizacion, "versiones", pNombreVersion);
             }
 
-            //GuardarLogTest("La ruta donde estaran los estilos es la siguiente: " + mRutaImagenes + "\\" + ruta);
+            mLoggingService.GuardarLogDebug("La ruta donde estaran los estilos es la siguiente: " + mRutaImagenes + "\\" + ruta, mLogger);
 
             try
             {
@@ -462,7 +445,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
             }
 
             return null;

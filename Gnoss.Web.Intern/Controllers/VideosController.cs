@@ -92,7 +92,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al agregar el vídeo {pDocumentoID}{pExtension}", base.mLogger);
+                mLoggingService.GuardarLogError(ex, $"Error al agregar el vídeo {pDocumentoID}{pExtension}", mLogger);
                 return StatusCode(500);
             }
         }
@@ -123,7 +123,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al agregar el vídeo al espacio personal. Datos petición: Fichero -> {pDocumentoID}{pExtension} ||| pPersonaID -> {pPersonaID} ||| pFichero tiene valor? -> {pFichero != null}", base.mLogger);
+                mLoggingService.GuardarLogError(ex, $"Error al agregar el vídeo al espacio personal. Datos petición: Fichero -> {pDocumentoID}{pExtension} ||| pPersonaID -> {pPersonaID} ||| pFichero tiene valor? -> {pFichero != null}", mLogger);
                 return 0;
             }
         }
@@ -154,7 +154,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al agregar el vídeo de organización. Datos petición: Fichero -> {pDocumentoID}{pExtension} ||| pOrganizacion -> {pOrganizacionID} ||| pFichero tiene valor? -> {pFichero != null}", base.mLogger);
+                mLoggingService.GuardarLogError(ex, $"Error al agregar el vídeo de organización. Datos petición: Fichero -> {pDocumentoID}{pExtension} ||| pOrganizacion -> {pOrganizacionID} ||| pFichero tiene valor? -> {pFichero != null}", mLogger);
                 return 0;
             }
         }
@@ -185,7 +185,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al agregar el vídeo semántico. Datos petición: Fichero -> {pDocumentoID}{pExtension} ||| pVideoID -> {pVideoID} ||| pFichero tiene valor? -> {pFichero != null}", base.mLogger);
+                mLoggingService.GuardarLogError(ex, $"Error al agregar el vídeo semántico. Datos petición: Fichero -> {pDocumentoID}{pExtension} ||| pVideoID -> {pVideoID} ||| pFichero tiene valor? -> {pFichero != null}", mLogger);
                 return 0;
             }
         }
@@ -547,7 +547,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"No se ha podido crear el fichero");
+                mLoggingService.GuardarLogError(ex, $"No se ha podido crear el fichero", mLogger);
                 throw;
             }
             finally

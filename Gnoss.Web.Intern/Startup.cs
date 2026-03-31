@@ -11,6 +11,7 @@ using Es.Riam.InterfacesOpenArchivos;
 using Es.Riam.Open;
 using Es.Riam.OpenArchivos;
 using Es.Riam.OpenReplication;
+using Es.Riam.Semantica.OWL;
 using Es.Riam.Util;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -28,6 +29,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 
 namespace Gnoss.Web.Intern
@@ -46,21 +48,9 @@ namespace Gnoss.Web.Intern
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-			ILoggerFactory loggerFactory =
-			LoggerFactory.Create(builder =>
-			{
-				builder.AddConfiguration(Configuration.GetSection("Logging"));
-				builder.AddSimpleConsole(options =>
-				{
-					options.IncludeScopes = true;
-					options.SingleLine = true;
-					options.TimestampFormat = "yyyy-MM-dd HH:mm:ss ";
-					options.UseUtcTimestamp = true;
-				});
-			});
+            LoggingService.ConfigurarLogging(services, Configuration);
 
-			services.AddSingleton(loggerFactory);
-			services.AddControllers();
+            services.AddControllers();
             services.AddHttpContextAccessor();
             services.AddScoped(typeof(UtilTelemetry));
             services.AddScoped(typeof(Usuario));
@@ -154,7 +144,9 @@ namespace Gnoss.Web.Intern
                 });
                 options.OperationFilter<SecurityRequirementsOperationFilter>();
             });
-
+            var serviceProvider = services.BuildServiceProvider();
+            var entity = serviceProvider.GetService<EntityContext>();
+            EstablecerDominioCache(entity);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -187,6 +179,21 @@ namespace Gnoss.Web.Intern
             {
                 endpoints.MapControllers();
             });
+        }
+
+        private void EstablecerDominioCache(Es.Riam.Gnoss.AD.EntityModel.EntityContext entity)
+        {
+            string dominio = entity.ParametroAplicacion.Where(parametroApp => parametroApp.Parametro.Equals("UrlIntragnoss")).FirstOrDefault().Valor;
+            GestionOWL.URLIntragnoss = dominio;
+
+            dominio = dominio.Replace("http://", "").Replace("https://", "").Replace("www.", "");
+
+            if (dominio[dominio.Length - 1] == '/')
+            {
+                dominio = dominio.Substring(0, dominio.Length - 1);
+            }
+
+            BaseCL.DominioEstatico = dominio;
         }
     }
 }

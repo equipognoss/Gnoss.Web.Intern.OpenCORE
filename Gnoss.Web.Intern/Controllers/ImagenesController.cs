@@ -143,7 +143,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-				_fileOperationsService.GuardarLogError(ex);
+				mLoggingService.GuardarLogError(ex, mLogger);
                 return StatusCode(500);
             }
         }
@@ -204,7 +204,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return BadRequest(false);
             }
         }
@@ -264,7 +264,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return BadRequest(false);
             }
         }
@@ -327,7 +327,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return BadRequest(false);
             }
         }
@@ -388,7 +388,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
             }
 
             return Ok(respuesta);
@@ -448,7 +448,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return StatusCode(500);
             }
             return null;
@@ -474,7 +474,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return Ok(false);
             }
             return Ok(true);
@@ -502,7 +502,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return StatusCode(500);
             }
         }
@@ -549,7 +549,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return StatusCode(500);
             }
         }
@@ -594,7 +594,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return BadRequest(false);
             }
         }
@@ -612,7 +612,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return StatusCode(500);
             }
         }
@@ -630,7 +630,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return StatusCode(500);
             }
         }
@@ -657,7 +657,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return StatusCode(500);
             }
         }
@@ -674,7 +674,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return StatusCode(500);
             }
         }
@@ -689,7 +689,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return StatusCode(500);
             }
         }
@@ -708,7 +708,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return StatusCode(500);
             }
         }
@@ -764,7 +764,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return StatusCode(500);
             }
         }
@@ -782,7 +782,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return StatusCode(500);
             }
         }
@@ -1023,7 +1023,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return StatusCode(500);
             }
         }
@@ -1058,7 +1058,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return StatusCode(500);
             }
         }
@@ -1121,7 +1121,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return StatusCode(500);
             }
         }
@@ -1137,7 +1137,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return StatusCode(500);
             }
         }
@@ -1187,7 +1187,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return StatusCode(500);
             }
         }
@@ -1279,7 +1279,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return StatusCode(500);
             }
         }
@@ -1387,7 +1387,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 throw;
             }
         }
@@ -1447,7 +1447,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 throw;
             }
         }

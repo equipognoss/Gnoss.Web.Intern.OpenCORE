@@ -96,7 +96,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return BadRequest(false);
             }
         }
@@ -133,7 +133,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return BadRequest("KO");
             }
         }
@@ -164,7 +164,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return BadRequest("KO");
             }
         }
@@ -190,7 +190,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return BadRequest(false);
             }
         }
@@ -214,7 +214,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return Ok(false);
             }
         }
@@ -297,7 +297,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return BadRequest(false);
             }
         }
@@ -325,7 +325,7 @@ namespace Gnoss.Web.Intern.Controllers
             }
             catch (Exception ex)
             {
-                _fileOperationsService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return BadRequest(false);
             }
         }
