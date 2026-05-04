@@ -958,7 +958,7 @@ namespace Gnoss.Web.Intern.Controllers
             string consulta = $"{facetadoAD.NamespacesVirtuosoLectura} SELECT ?o WHERE {{ ?s ?p ?o. ?documento <http://gnoss/hasEntidad> ?s. FILTER (?documento = <{urlIntragnoss}{pDocumentoID.ToString().ToLower()}>) }}";
             FacetadoDS facetadoDS = new FacetadoDS();
 
-            facetadoAD.LeerDeVirtuoso(consulta, "Archivos", facetadoDS, proyectoID.ToString());
+            facetadoAD.LeerDeVirtuoso(consulta, "Archivos", facetadoDS, proyectoID.ToString(), true);
 
             if (facetadoDS.Tables["Archivos"] != null)
             {
