@@ -1,24 +1,13 @@
-﻿using Amazon.S3;
-using Amazon.S3.Model;
-using Amazon.S3.Util;
-using Es.Riam.AbstractsOpen;
+﻿using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.EntityModel;
-using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.Facetado;
 using Es.Riam.Gnoss.AD.Facetado.Model;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
-using Es.Riam.Gnoss.CL.ServiciosGenerales;
-using Es.Riam.Gnoss.Elementos.Documentacion;
-using Es.Riam.Gnoss.Elementos.ParametroAplicacion;
 using Es.Riam.Gnoss.FileManager;
 using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
-using Es.Riam.Gnoss.UtilServiciosWeb;
-using Es.Riam.Gnoss.Web.Controles.Documentacion;
-using Es.Riam.Gnoss.Web.Controles.ParametroAplicacionGBD;
-using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
 using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper.Model;
 using Es.Riam.Gnoss.Web.MVC.Models.AdministrarEstilos;
 using Es.Riam.InterfacesOpenArchivos;
@@ -29,7 +18,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using MongoDB.Bson;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -38,7 +26,6 @@ using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml;
-using System.Xml.Linq;
 using System.Xml.Serialization;
 
 namespace Gnoss.Web.Intern.Controllers
@@ -72,7 +59,7 @@ namespace Gnoss.Web.Intern.Controllers
 
         private GestionArchivos mGestorArchivosOntologias;
 
-        private IHostingEnvironment mEnv;
+        private IWebHostEnvironment mEnv;
 
         private IHttpContextAccessor mHttpContextAccessor;
         private EntityContext _entityContext;
@@ -85,7 +72,7 @@ namespace Gnoss.Web.Intern.Controllers
 
         #region Constructor
 
-        public ImagenesController(LoggingService loggingService, IHostingEnvironment env, IHttpContextAccessor httpContextAccessor, ConfigService configService, IUtilArchivos utilArchivos, EntityContext entityContext, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, VirtuosoAD virtuosoAD, RedisCacheWrapper redisCacheWrapper, ILoggerFactory loggerFactory):base(loggingService,redisCacheWrapper,configService,loggerFactory)
+        public ImagenesController(LoggingService loggingService, IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor, ConfigService configService, IUtilArchivos utilArchivos, EntityContext entityContext, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, VirtuosoAD virtuosoAD, RedisCacheWrapper redisCacheWrapper, ILoggerFactory loggerFactory):base(loggingService,redisCacheWrapper,configService,loggerFactory)
         {
             mHttpContextAccessor = httpContextAccessor;
             mEnv = env;
@@ -1369,7 +1356,7 @@ namespace Gnoss.Web.Intern.Controllers
 
                 mLoggingService.AgregarEntrada($"Entra en ImagenesController.EscribirImagen con la imagen: \n\t -Nombre: {pImagen.name} \n\t -Ruta: {pImagen.relative_path} \n\t -Extensión: {extension}");
 
-                if (extension == ".png" || extension == ".jpg" || extension == ".jpeg" || extension == ".gif" || extension == ".webp")
+                if (extension == ".png" || extension == ".jpg" || extension == ".jpeg" || extension == ".gif" || extension == ".webp" || extension == ".dzi")
                 {
                     if (pImagenDeOntologia)
                     {

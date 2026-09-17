@@ -50,12 +50,12 @@ namespace Gnoss.Web.Intern.Controllers
         private GestionArchivos mGestorArchivos;
         private IHttpContextAccessor _httpContextAccessor;
 
-        private IHostingEnvironment _env;
+        private IWebHostEnvironment _env;
         private FileOperationsService _fileOperationsService;
         private IUtilArchivos _utilArchivos;
         private new readonly ILogger mLogger;
         #endregion
-        public ObjetosMultimediaController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IHostingEnvironment env, ConfigService configService, IUtilArchivos utilArchivos,RedisCacheWrapper redisCacheWrapper, ILoggerFactory loggerFactory):base(loggingService,redisCacheWrapper,configService, loggerFactory)
+        public ObjetosMultimediaController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IWebHostEnvironment env, ConfigService configService, IUtilArchivos utilArchivos,RedisCacheWrapper redisCacheWrapper, ILoggerFactory loggerFactory):base(loggingService,redisCacheWrapper,configService, loggerFactory)
         {
             _httpContextAccessor = httpContextAccessor;
             _env = env;

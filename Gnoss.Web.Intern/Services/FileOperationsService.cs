@@ -13,10 +13,10 @@ namespace Gnoss.Web.Intern.Services
     public class FileOperationsService
     {
         private LoggingService _loggingService;
-        private IHostingEnvironment _env;
+        private IWebHostEnvironment _env;
         private ILogger<FileOperationsService> _logger;
 
-        public FileOperationsService(LoggingService loggingService, IHostingEnvironment env)
+        public FileOperationsService(LoggingService loggingService, IWebHostEnvironment env)
         {
             _loggingService = loggingService;
             _env = env;

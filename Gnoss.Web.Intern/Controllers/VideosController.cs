@@ -44,7 +44,7 @@ namespace Gnoss.Web.Intern.Controllers
         private ILogger mLogger;
         #endregion
 
-        public VideosController(LoggingService loggingService, Conexion conexion, IHostingEnvironment env, IUtilArchivos utilArchivos, ConfigService configService, RedisCacheWrapper redisCacheWrapper, ILoggerFactory loggerFactory) : base(loggingService, redisCacheWrapper, configService, loggerFactory)
+        public VideosController(LoggingService loggingService, Conexion conexion, IWebHostEnvironment env, IUtilArchivos utilArchivos, ConfigService configService, RedisCacheWrapper redisCacheWrapper, ILoggerFactory loggerFactory) : base(loggingService, redisCacheWrapper, configService, loggerFactory)
         {
             mConexion = conexion;
             mLogger = loggerFactory.CreateLogger<VideosController>();

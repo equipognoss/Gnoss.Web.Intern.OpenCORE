@@ -47,7 +47,7 @@ namespace Gnoss.Web.Intern.Controllers
         private static string mAzureStorageConnectionStringOntologias = "";
 
         private GestionArchivos mGestorArchivos;
-        private IHostingEnvironment _env;
+        private IWebHostEnvironment _env;
         private IHttpContextAccessor _httpContextAccessor;
         private GestionArchivos mGestorArchivosOntologias;
         private FileOperationsService _fileOperationsService;
@@ -55,7 +55,7 @@ namespace Gnoss.Web.Intern.Controllers
         private new readonly ILogger mLogger;
         #endregion
 
-        public EstilosController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IHostingEnvironment env, ConfigService configService, IUtilArchivos utilArchivos, RedisCacheWrapper redisCacheWrapper, ILoggerFactory loggerFactory) : base(loggingService, redisCacheWrapper, configService, loggerFactory)
+        public EstilosController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IWebHostEnvironment env, ConfigService configService, IUtilArchivos utilArchivos, RedisCacheWrapper redisCacheWrapper, ILoggerFactory loggerFactory) : base(loggingService, redisCacheWrapper, configService, loggerFactory)
         {
             _httpContextAccessor = httpContextAccessor;
             mLogger = loggerFactory.CreateLogger<EstilosController>();

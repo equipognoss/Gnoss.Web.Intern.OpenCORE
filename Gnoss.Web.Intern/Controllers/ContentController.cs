@@ -24,7 +24,7 @@ namespace Gnoss.Web.Intern.Controllers
         private const string CONTENT_RELATIVE_PATH = "/content/";
         private new readonly ILogger mLogger;
 
-        public ContentController(LoggingService loggingService, IHostingEnvironment env, ConfigService configService, RedisCacheWrapper redisCacheWrapper, ILogger<ContentController> logger, ILoggerFactory loggerFactory):base(loggingService, redisCacheWrapper, configService, loggerFactory)
+        public ContentController(LoggingService loggingService, IWebHostEnvironment env, ConfigService configService, RedisCacheWrapper redisCacheWrapper, ILogger<ContentController> logger, ILoggerFactory loggerFactory):base(loggingService, redisCacheWrapper, configService, loggerFactory)
         {
             mLogger = logger;
 

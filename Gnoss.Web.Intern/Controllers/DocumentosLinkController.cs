@@ -39,7 +39,7 @@ namespace Gnoss.Web.Intern.Controllers
 
         private IHttpContextAccessor _httpContextAccessor;
 
-        private IHostingEnvironment _env;
+        private IWebHostEnvironment _env;
         private FileOperationsService _fileOperationsService;
         private IUtilArchivos _utilArchivos;
         private readonly new ILogger mLogger;
@@ -47,7 +47,7 @@ namespace Gnoss.Web.Intern.Controllers
 
         #region Constructor
 
-        public DocumentosLinkController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IHostingEnvironment env, ConfigService configService, IUtilArchivos utilArchivos,RedisCacheWrapper redisCacheWrapper, ILoggerFactory loggerFactory):base(loggingService,redisCacheWrapper,configService, loggerFactory)
+        public DocumentosLinkController(LoggingService loggingService, IHttpContextAccessor httpContextAccessor, IWebHostEnvironment env, ConfigService configService, IUtilArchivos utilArchivos,RedisCacheWrapper redisCacheWrapper, ILoggerFactory loggerFactory):base(loggingService,redisCacheWrapper,configService, loggerFactory)
         {
             _httpContextAccessor = httpContextAccessor;
             _env = env;
@@ -127,7 +127,7 @@ namespace Gnoss.Web.Intern.Controllers
                     mGestorArchivos.RutaFicheros = Path.Combine(_env.ContentRootPath, UtilArchivos.ContentImagenes);
                 }
 
-                mGestorArchivos.CrearFicheroFisico(pFile.path, pFile.name + pFile.extension, pFile.file);
+                mGestorArchivos.CrearFicheroFisico(pFile.path, pFile.name + pFile.extension, pFile.file, false, pFile.error_if_exists);
 
                 return Ok("OK");
             }
