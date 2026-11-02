@@ -7,6 +7,7 @@ using Es.Riam.Gnoss.HealthChecks;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Util.Seguridad;
+using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpenArchivos;
 using Es.Riam.Open;
@@ -47,6 +48,19 @@ namespace Gnoss.Web.Intern
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors(options =>
+            {
+                options.AddPolicy(name: "_myAllowSpecificOrigins",
+                                  builder =>
+                                  {
+                                      builder.SetIsOriginAllowed(UtilServicios.ComprobarDominioPermitidoCORS);
+                                      builder.AllowAnyHeader();
+                                      builder.WithMethods("GET");
+                                      builder.AllowCredentials();
+                                  });
+            });
+
+
             services.AddControllers();
             services.AddHttpContextAccessor();
             services.AddScoped(typeof(Usuario));
@@ -150,6 +164,7 @@ namespace Gnoss.Web.Intern
             var serviceProvider = services.BuildServiceProvider();
             var entity = serviceProvider.GetService<EntityContext>();
             EstablecerDominioCache(entity);
+            UtilServicios.CargarDominiosPermitidosCORS(entity);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -161,6 +176,7 @@ namespace Gnoss.Web.Intern
             }
 
             app.UseRouting();
+            app.UseCors();
 
             app.UseAuthentication();
             app.UseAuthorization();
