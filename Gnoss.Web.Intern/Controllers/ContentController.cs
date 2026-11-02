@@ -2,8 +2,10 @@
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
+using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.InterfacesOpenArchivos;
 using Es.Riam.Util;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +20,7 @@ using System.Net.Mime;
 namespace Gnoss.Web.Intern.Controllers
 {
     [Route("content/{*redirect}")]
+    [EnableCors("_myAllowSpecificOrigins")]
     public class ContentController : ControllerBaseIntern
     {
         private static string mDirectorioPrincipal;
@@ -54,6 +57,14 @@ namespace Gnoss.Web.Intern.Controllers
                     long etagHash = lastModified.Value.Ticks ^ file.Length;
 
                     EntityTagHeaderValue etag = new EntityTagHeaderValue('\"' + Convert.ToString(etagHash, 16) + '\"');
+
+                    // El middleware de CORS solo añade "Vary: Origin" a los orígenes permitidos. Se añade en el resto de casos
+                    // para que el navegador no reutilice desde su caché una respuesta sin cabeceras CORS
+                    string origin = Request.Headers.Origin;
+                    if (string.IsNullOrEmpty(origin) || !UtilServicios.ComprobarDominioPermitidoCORS(origin))
+                    {
+                        Response.Headers.Append(HeaderNames.Vary, HeaderNames.Origin);
+                    }
 
                     return File(file.OpenRead(), contentType, lastModified, etag);
                 }
