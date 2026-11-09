@@ -173,7 +173,7 @@ namespace Gnoss.Web.Intern.Controllers
         {
             try
             {
-                bool resultado = CrearFichero(pFichero, $"{pVideoID}.flv", pDocumentoID, 2);
+                bool resultado = CrearFichero(pFichero, $"{pVideoID}{Path.GetExtension(pExtension)}", pDocumentoID, 2);
                 if (resultado)
                 {
                     return 1;
@@ -341,7 +341,7 @@ namespace Gnoss.Web.Intern.Controllers
         {
             try
             {
-                return BorrarVideo(pDocumentoID, pPersonaID, 0);
+                return BorrarVideo($"{pDocumentoID}.flv", pPersonaID, 0);
             }
             catch (Exception ex)
             {
@@ -361,7 +361,7 @@ namespace Gnoss.Web.Intern.Controllers
         {
             try
             {
-                return BorrarVideo(pDocumentoID, pOrganizacionID, 1);
+                return BorrarVideo($"{pDocumentoID}.flv", pOrganizacionID, 1);
             }
             catch (Exception ex)
             {
@@ -374,18 +374,18 @@ namespace Gnoss.Web.Intern.Controllers
         /// Elimina un vídeo de un recurso semántico
         /// </summary>
         /// <param name="pDocumentoID">Identificador del recurso semántico que tiene el vídeo</param>
-        /// <param name="pVideoID">Identificador del vídeo</param>
+        /// <param name="name_video">Nombre del vídeo, incluida su extensión</param>
         [HttpDelete]
         [Route("BorrarVideoSemantico")]
-        public bool BorrarVideoSemantico(Guid pDocumentoID, Guid pVideoID)
+        public bool BorrarVideoSemantico(Guid pDocumentoID, string name_video)
         {
             try
             {
-                return BorrarVideo(pVideoID, pDocumentoID, 2);
+                return BorrarVideo(Path.GetFileName(name_video), pDocumentoID, 2);
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al borrar el vídeo semántico {pVideoID} del documento {pDocumentoID}", mLogger);
+                mLoggingService.GuardarLogError(ex, $"Error al borrar el vídeo semántico {name_video} del documento {pDocumentoID}", mLogger);
                 return false;
             }
         }
@@ -450,30 +450,23 @@ namespace Gnoss.Web.Intern.Controllers
         /// </summary>
         /// <param name="pDocumentoID">Identificador del recurso con el vídeo original</param>
         /// <param name="pDocumentoIDCopia">Identificador del recurso al que se va a copiar el vídeo</param>
-        /// <param name="pVideoID">Identificador que representa el vídeo a copiar</param>
+        /// <param name="name_video">Nombre del vídeo a copiar, incluida su extensión</param>
         [HttpPost]
         [Route("CopiarVideoSemantico")]
-        public IActionResult CopiarVideoSemantico(Guid pDocumentoID, Guid pDocumentoIDCopia, Guid pVideoID)
+        public IActionResult CopiarVideoSemantico(Guid pDocumentoID, Guid pDocumentoIDCopia, string name_video)
         {
             try
             {
-                string rutaVideo = Path.Combine(mRutaVideos, "VideosSemanticos", UtilArchivos.DirectorioDocumento(pDocumentoID), $"{pVideoID}.flv");
-                string rutaCopiaVideo = Path.Combine(mRutaVideos, "VideosSemanticos", UtilArchivos.DirectorioDocumento(pDocumentoID), $"{pVideoID}.flv");
-                DirectoryInfo directorioCopia = new DirectoryInfo(Path.Combine(mRutaVideos, "VideosSemanticos", UtilArchivos.DirectorioDocumento(pDocumentoID)));
+                string rutaVideoOrigen = Path.Combine(UtilArchivos.ContentVideosSemanticos, UtilArchivos.DirectorioDocumento(pDocumentoID));
+                string rutaVideoDestino = Path.Combine(UtilArchivos.ContentVideosSemanticos, UtilArchivos.DirectorioDocumento(pDocumentoIDCopia));
 
-                if (!directorioCopia.Exists)
-                {
-                    directorioCopia.Create();
-                }
-
-                FileInfo fich = new FileInfo(rutaVideo);
-                fich.CopyTo(rutaCopiaVideo);
+                mGestorArchivos.CopiarArchivo(rutaVideoOrigen, rutaVideoDestino, Path.GetFileName(name_video), true);
 
                 return Ok(true);
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Ha habido un error al copiar el vídeo semántico {pVideoID} del Documento {pDocumentoID} al documento {pDocumentoIDCopia}.", mLogger);
+                mLoggingService.GuardarLogError(ex, $"Ha habido un error al copiar el vídeo semántico {name_video} del Documento {pDocumentoID} al documento {pDocumentoIDCopia}.", mLogger);
                 return StatusCode(500);
             }
         }
@@ -593,31 +586,31 @@ namespace Gnoss.Web.Intern.Controllers
         /// <summary>
         /// Borra un video.
         /// </summary>
-        /// <param name="pDocumentoID">Identificador de documento</param>
-        /// <param name="pCarpetaID">Identificador de persona o organización</param>
+        /// <param name="pNombreVideo">Nombre del vídeo, incluida su extensión</param>
+        /// <param name="pCarpetaID">Identificador de persona, organización o recurso semántico</param>
         /// <param name="pTipoVideo">Indica si el video es de una organización, de una persona o semantico</param>
         /// <returns>True si el video es borrado, false en caso contario</returns>
         [NonAction]
-        private bool BorrarVideo(Guid pDocumentoID, Guid pCarpetaID, int pTipoVideo)
+        private bool BorrarVideo(string pNombreVideo, Guid pCarpetaID, int pTipoVideo)
         {
             string rutaVideo = "";
             try
             {
                 if (pCarpetaID == Guid.Empty)
                 {
-                    rutaVideo = Path.Combine(mRutaVideos, $"{pDocumentoID}.flv");
+                    rutaVideo = Path.Combine(mRutaVideos, pNombreVideo);
                 }
                 else if (pTipoVideo == 0)
                 {
-                    rutaVideo = Path.Combine(mRutaVideos, "VideosPersonales", UtilArchivos.DirectorioDocumento(pCarpetaID), $"{pDocumentoID}.flv");
+                    rutaVideo = Path.Combine(mRutaVideos, "VideosPersonales", UtilArchivos.DirectorioDocumento(pCarpetaID), pNombreVideo);
                 }
                 else if (pTipoVideo == 1)
                 {
-                    rutaVideo = Path.Combine(mRutaVideos, "VideosOrganizaciones", UtilArchivos.DirectorioDocumento(pCarpetaID), $"{pDocumentoID}.flv");
+                    rutaVideo = Path.Combine(mRutaVideos, "VideosOrganizaciones", UtilArchivos.DirectorioDocumento(pCarpetaID), pNombreVideo);
                 }
                 else
                 {
-                    rutaVideo = Path.Combine(mRutaVideos, "VideosSemanticos", UtilArchivos.DirectorioDocumento(pCarpetaID), $"{pDocumentoID}.flv");
+                    rutaVideo = Path.Combine(mRutaVideos, "VideosSemanticos", UtilArchivos.DirectorioDocumento(pCarpetaID), pNombreVideo);
                 }
 
                 //Borramos el fichero físico.
