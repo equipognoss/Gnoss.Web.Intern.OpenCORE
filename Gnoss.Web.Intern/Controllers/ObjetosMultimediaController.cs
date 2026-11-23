@@ -225,10 +225,12 @@ namespace Gnoss.Web.Intern.Controllers
             {
                 string rutaZip = mGestorArchivos.ObtenerRutaDirectorioZip(ruta);
                 string nombreFicheroZip = $"ObjetosMultimedia_{DateTime.Now.ToString("yyyyMMddHHmmss")}.zip";
+                string zipFilePath = Path.Combine(rutaExportaciones, nombreFicheroZip);
                 Console.WriteLine($"Inicio proceso zip: {nombreFicheroZip}");
-                ProcessStartInfo procStartInfo = new ProcessStartInfo("zip", $"-rq {nombreFicheroZip} {rutaZip} -i *");
+                ProcessStartInfo procStartInfo = new ProcessStartInfo("zip", $"-rq \"{zipFilePath}\" . -i *");
                 procStartInfo.RedirectStandardOutput = true;
-                procStartInfo.WorkingDirectory = rutaExportaciones;
+                procStartInfo.RedirectStandardError = true;
+                procStartInfo.WorkingDirectory = rutaZip;
                 procStartInfo.UseShellExecute = false;
                 procStartInfo.CreateNoWindow = false;
 
@@ -236,17 +238,24 @@ namespace Gnoss.Web.Intern.Controllers
                 Process proc = new Process();
                 proc.StartInfo = procStartInfo;
                 proc.Start();
+                Task<string> zipErrorTask = proc.StandardError.ReadToEndAsync();
                 while (!proc.StandardOutput.EndOfStream)
                 {
                     string line = proc.StandardOutput.ReadLine();
                 }
+                proc.WaitForExit();
 
-                respuesta = System.IO.File.ReadAllBytes(Path.Combine(mRutaImagenes, rutaExportaciones, nombreFicheroZip));
-
-                if (System.IO.File.Exists(Path.Combine(rutaExportaciones, nombreFicheroZip)))
+                if (proc.ExitCode != 0)
                 {
-                    Console.WriteLine($"Elimino dichero residual de: {Path.Combine(rutaExportaciones, nombreFicheroZip)}");
-                    System.IO.File.Delete(Path.Combine(rutaExportaciones, nombreFicheroZip));
+                    mLoggingService.GuardarLogError($"Error al comprimir los objetos multimedia de {rutaZip}. Código de salida {proc.ExitCode}: {zipErrorTask.Result}", mLogger);
+                }
+
+                respuesta = System.IO.File.ReadAllBytes(zipFilePath);
+
+                if (System.IO.File.Exists(zipFilePath))
+                {
+                    Console.WriteLine($"Elimino fichero residual de: {zipFilePath}");
+                    System.IO.File.Delete(zipFilePath);
                 }
                 return File(respuesta, "application/zip");
             }
